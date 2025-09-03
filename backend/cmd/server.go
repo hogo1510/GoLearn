@@ -1,11 +1,15 @@
 package cmd
 
 import (
+	"backend/ai/poc"
+	"backend/converter"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 )
 
 // CORS middleware voor http.HandlerFunc
@@ -24,7 +28,6 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// Je bestaande functies met CORS headers
 func getRoot(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("got / request\n")
 	w.Header().Set("Content-Type", "application/json")
@@ -36,85 +39,111 @@ func getExamns(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("got /getExams request\n")
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	io.WriteString(w, `[
-        {
-            "id": 1,
-            "naam": "Wiskunde Examen",
-            "vak": "Wiskunde",
-            "niveau": "Havo 4",
-            "tijdsduur": 90
-        },
-        {
-            "id": 2,
-            "naam": "Nederlands Toets",
-            "vak": "Nederlands",
-            "niveau": "Vwo 5",
-            "tijdsduur": 60
-        }
-    ]`)
+
+	csvPath := filepath.Join("converter", "MockData", "MockExams.csv")
+
+	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
+		fmt.Printf("Bestand niet gevonden: %s\n", csvPath)
+		http.Error(w, "CSV bestand niet gevonden", http.StatusNotFound)
+		return
+	}
+
+	data, err := converter.ReadCSV(csvPath)
+	if err != nil {
+		errorMsg := fmt.Sprintf("Fout bij lezen CSV %s: %v", csvPath, err)
+		fmt.Println(errorMsg)
+
+		http.Error(w, errorMsg, http.StatusInternalServerError)
+		return
+	}
+	fmt.Printf("CSV goed geladen")
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		http.Error(w, "Fout bij lezen van JSON: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	io.WriteString(w, string(jsonData))
 }
 
 func getVragen(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("got /getVragen request\n")
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	io.WriteString(w, `[
-        {
-            "id": 1,
-            "examen_id": 1,
-            "vraag": "Los de vergelijking op: 2x + 5 = 13",
-            "punten": 2,
-            "type": "open"
-        },
-        {
-            "id": 2,
-            "examen_id": 1,
-            "vraag": "Wat is de afgeleide van f(x) = x²?",
-            "punten": 1,
-            "type": "meerkeuze"
-        },
-        {
-            "id": 3,
-            "examen_id": 2,
-            "vraag": "Noem 3 kenmerken van een betoog",
-            "punten": 3,
-            "type": "open"
-        }
-    ]`)
+
+	csvPath := filepath.Join("converter", "MockData", "MockVragen.csv")
+
+	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
+		fmt.Printf("Bestand niet gevonden: %s\n", csvPath)
+		http.Error(w, "CSV bestand niet gevonden", http.StatusNotFound)
+		return
+	}
+
+	data, err := converter.ReadCSV(csvPath)
+	if err != nil {
+		errorMsg := fmt.Sprintf("Fout bij lezen CSV %s: %v", csvPath, err)
+		fmt.Println(errorMsg)
+
+		http.Error(w, errorMsg, http.StatusInternalServerError)
+		return
+	}
+	fmt.Printf("CSV goed geladen")
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		http.Error(w, "Fout bij lezen van JSON: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	io.WriteString(w, string(jsonData))
 }
 
 func getAntwoorden(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("got /getAntwoorden request\n")
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	io.WriteString(w, `[
-        {
-            "id": 1,
-            "vraag_id": 1,
-            "correct_antwoord": "x = 4",
-            "uitleg": "2x + 5 = 13 → 2x = 8 → x = 4"
-        },
-        {
-            "id": 2,
-            "vraag_id": 2,
-            "correct_antwoord": "2x",
-            "meerkeuze_opties": ["x", "2x", "2", "x²"]
-        },
-        {
-            "id": 3,
-            "vraag_id": 3,
-            "correct_antwoord": "Stelling, argumenten, conclusie",
-            "uitleg": "Een betoog bestaat uit een stelling, ondersteunende argumenten en een conclusie"
-        }
-    ]`)
+
+	csvPath := filepath.Join("converter", "MockData", "MockAntwoorden.csv")
+
+	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
+		fmt.Printf("Bestand niet gevonden: %s\n", csvPath)
+		http.Error(w, "CSV bestand niet gevonden", http.StatusNotFound)
+		return
+	}
+
+	data, err := converter.ReadCSV(csvPath)
+	if err != nil {
+		errorMsg := fmt.Sprintf("Fout bij lezen CSV %s: %v", csvPath, err)
+		fmt.Println(errorMsg)
+
+		http.Error(w, errorMsg, http.StatusInternalServerError)
+		return
+	}
+	fmt.Printf("CSV goed geladen")
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		http.Error(w, "Fout bij lezen van JSON: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	io.WriteString(w, string(jsonData))
+}
+
+func getAiHelp(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("got /getAiHelp request\n")
+	io.WriteString(w, "you're getting help from AI")
+	poc.GetChatExplanation("DNA-replicatie is een semi-conservatief proces.")
+
 }
 
 func OpenServ() {
-	// Gebruik de CORS middleware voor elke handler
 	http.HandleFunc("/", corsMiddleware(getRoot))
 	http.HandleFunc("/getExams", corsMiddleware(getExamns))
 	http.HandleFunc("/getVragen", corsMiddleware(getVragen))
 	http.HandleFunc("/getAntwoorden", corsMiddleware(getAntwoorden))
+	http.HandleFunc("/getAiHelp", corsMiddleware(getAiHelp))
 
 	fmt.Println("Server starting on :3333 with CORS enabled...")
 
