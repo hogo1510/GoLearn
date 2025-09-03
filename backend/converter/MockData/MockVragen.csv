@@ -1,11 +1,11 @@
 id,examen_id,vraag,punten,type
-1,1,Wat is de afgeleide van f(x) = x²?,2,meerkeuze
-2,1,Welke werkwoordstijd is 'hadden gewerkt'?,2,meerkeuze
-3,2,Wat is de past tense van 'to go'?,2,meerkeuze
-4,2,Welke organel produceert energie in een cel?,2,meerkeuze
-5,3,Wat is de chemische formule voor water?,2,meerkeuze
-6,3,Welke stof is een voorbeeld van een sterk zuur?,2,meerkeuze
-7,4,Welke van deze zinsneden is een voorbeeld van een paradox?,2,meerkeuze
-8,4,Wat is de lading van een proton?,2,meerkeuze
-9,5,DNA-replicatie is een semi-conservatief proces.,2,waar_onwaar
-10,5,De afgeleide van een constante functie is altijd 0.,2,waar_onwaar
+1,6,Welke gesprekstechniek wordt gebruikt wanneer een hulpverlener de emoties van een cliënt verwoordt?,2,meerkeuze
+2,6,Wat is de eerste fase in het hulpverleningsproces volgens het methodisch handelen?,2,meerkeuze
+3,6,Een indicatiestelling vindt plaats na de intakefase.,2,waar_onwaar
+4,6,Welke wet regelt de verplichte meldcode huiselijk geweld en kindermishandeling?,2,meerkeuze
+5,6,Wat is het primaire doel van motiverende gespreksvoering?,2,meerkeuze
+6,6,Transparantie over het dossier is een recht van de cliënt volgens de AVG.,2,waar_onwaar
+7,6,Welke interventie is het meest geschikt bij een crisisinterventie?,2,meerkeuze
+8,6,De Wmo 2015 is gericht op participatie en zelfredzaamheid.,2,waar_onwaar
+9,6,Welke houding kenmerkt de basishouding van een social worker?,2,meerkeuze
+10,6,Een ecogram maakt deel uit van een sociale netwerkanalyse.,2,waar_onwaar

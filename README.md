@@ -2,5 +2,5 @@
 
 checklist
 - run go server
-- run ollama
+- run ollama mistral
 - run webserver

@@ -133,9 +133,51 @@ func getAntwoorden(w http.ResponseWriter, r *http.Request) {
 
 func getAiHelp(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("got /getAiHelp request\n")
-	io.WriteString(w, "you're getting help from AI")
-	poc.GetChatExplanation("DNA-replicatie is een semi-conservatief proces.")
 
+	// Alleen POST requests toestaan
+	if r.Method != "POST" {
+		http.Error(w, "Alleen POST requests zijn toegestaan", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Request body lezen
+	var requestData struct {
+		Vraag string `json:"vraag"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		http.Error(w, "Ongeldige JSON in request body", http.StatusBadRequest)
+		return
+	}
+
+	// Controleren of vraag niet leeg is
+	if requestData.Vraag == "" {
+		http.Error(w, "Vraag mag niet leeg zijn", http.StatusBadRequest)
+		return
+	}
+
+	// AI uitleg ophalen
+	uitleg, err := poc.GetChatExplanation(requestData.Vraag)
+	if err != nil {
+		http.Error(w, "Fout bij ophalen AI uitleg: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Response sturen
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]string{
+		"vraag":  requestData.Vraag,
+		"uitleg": uitleg,
+	}
+
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, "Fout bij maken van response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(jsonResponse)
 }
 
 func OpenServ() {
