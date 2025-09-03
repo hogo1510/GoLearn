@@ -63,6 +63,14 @@ button {
     background-color: #c0392b;
     transform: translateY(-2px);
 }
+#btnAI{
+    background-color: #2c3e50;
+    color: white;
+}
+#btnAI:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+}
 #resultaat {
     margin-top: 30px;
     padding: 20px;
