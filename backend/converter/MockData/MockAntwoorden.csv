@@ -1,11 +1,37 @@
-id,vraag_id,correct_antwoord,uitleg,meerkeuze_opties
-1,1,x = 4,2x + 5 = 13 → 2x = 8 → x = 4,
-2,2,2x,De afgeleide van x^n is n*x^(n-1),"x;2x;2;x²"
-3,3,Stelling, argumenten, conclusie,Een betoog bestaat uit een stelling, ondersteunende argumenten en een conclusie,
-4,4,Voltooid verleden tijd,'hadden gewerkt' is voltooid verleden tijd,"Tegenwoordige tijd;Voltooid verleden tijd;Onvoltooid verleden tijd;Voltooid tegenwoordige tijd"
-5,5,Het boek ligt op de tabel,Correcte vertaling van 'The book is on the table',
-6,6,went,'Go' → 'went' → 'gone',"goed;went;gone;goes"
-7,7,Fotosynthese is het proces waarbij planten zonlicht omzetten in energie,Met behulp van chlorofyl zetten planten CO2 en water om in glucose en zuurstof,
-8,8,Mitochondriën,Mitochondriën zijn de energiecentrales van de cel,"Kern;Mitochondriën;Ribosoom;Golgi-apparaat"
-9,9,H2O,Water bestaat uit 2 waterstofatomen en 1 zuurstofatoom,"H2O;HO2;H2O2;OH"
-10,10,Een base heeft pH > 7, een zuur heeft pH < 7,Basen zijn protonacceptoren, zuren zijn protondonoren,
+id,vraag_id,antwoord,juist
+1,1,2x,1
+2,1,x,0
+3,1,2,0
+4,1,x²,0
+5,2,Voltooid verleden tijd,1
+6,2,Onvoltooid verleden tijd,0
+7,2,Voltooid tegenwoordige tijd,0
+8,2,Onvoltooid tegenwoordige tijd,0
+9,3,went,1
+10,3,goed,0
+11,3,gone,0
+12,3,goes,0
+13,4,Mitochondriën,1
+14,4,Ribosoom,0
+15,4,Golgi-apparaat,0
+16,4,Kern,0
+17,5,H2O,1
+18,5,HO2,0
+19,5,H2O2,0
+20,5,OH,0
+21,6,Zoutzuur (HCl),1
+22,6,Water (H2O),0
+23,6,Keukenzout (NaCl),0
+24,6,Azijn (CH3COOH),0
+25,7,Een levend dode,1
+26,7,Een harde zachte knuffel,0
+27,7,Een oude nieuwe fiets,0
+28,7,Een natte regenjas,0
+29,8,Positief (+1),1
+30,8,Neutraal (0),0
+31,8,Negatief (-1),0
+32,8,Het hangt ervan af,0
+33,9,Waar,1
+34,9,Onwaar,0
+35,10,Waar,1
+36,10,Onwaar,0

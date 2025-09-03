@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"backend/ai/poc"
 	"backend/converter"
 	"encoding/json"
 	"errors"
@@ -130,11 +131,19 @@ func getAntwoorden(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(jsonData))
 }
 
+func getAiHelp(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("got /getAiHelp request\n")
+	io.WriteString(w, "you're getting help from AI")
+	poc.GetChatExplanation("DNA-replicatie is een semi-conservatief proces.")
+
+}
+
 func OpenServ() {
 	http.HandleFunc("/", corsMiddleware(getRoot))
 	http.HandleFunc("/getExams", corsMiddleware(getExamns))
 	http.HandleFunc("/getVragen", corsMiddleware(getVragen))
 	http.HandleFunc("/getAntwoorden", corsMiddleware(getAntwoorden))
+	http.HandleFunc("/getAiHelp", corsMiddleware(getAiHelp))
 
 	fmt.Println("Server starting on :3333 with CORS enabled...")
 
