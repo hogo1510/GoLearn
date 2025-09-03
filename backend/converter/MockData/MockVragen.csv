@@ -1,0 +1,11 @@
+id,examen_id,vraag,punten,type
+1,1,Los de vergelijking op: 2x + 5 = 13,2,open
+2,1,Wat is de afgeleide van f(x) = x²?,1,meerkeuze
+3,2,Noem 3 kenmerken van een betoog,3,open
+4,2,Welke werkwoordstijd is 'hadden gewerkt'?,1,meerkeuze
+5,3,Translate: 'The book is on the table',2,open
+6,3,What is the past tense of 'to go'?,1,meerkeuze
+7,4,Leg uit wat fotosynthese is,3,open
+8,4,Welke organel produceert energie?,1,meerkeuze
+9,5,Wat is de chemische formule voor water?,1,meerkeuze
+10,5,Leg het verschil uit tussen een base en een zuur,2,open

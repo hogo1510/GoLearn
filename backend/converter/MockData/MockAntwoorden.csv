@@ -1,0 +1,11 @@
+id,vraag_id,correct_antwoord,uitleg,meerkeuze_opties
+1,1,x = 4,2x + 5 = 13 → 2x = 8 → x = 4,
+2,2,2x,De afgeleide van x^n is n*x^(n-1),"x;2x;2;x²"
+3,3,Stelling, argumenten, conclusie,Een betoog bestaat uit een stelling, ondersteunende argumenten en een conclusie,
+4,4,Voltooid verleden tijd,'hadden gewerkt' is voltooid verleden tijd,"Tegenwoordige tijd;Voltooid verleden tijd;Onvoltooid verleden tijd;Voltooid tegenwoordige tijd"
+5,5,Het boek ligt op de tabel,Correcte vertaling van 'The book is on the table',
+6,6,went,'Go' → 'went' → 'gone',"goed;went;gone;goes"
+7,7,Fotosynthese is het proces waarbij planten zonlicht omzetten in energie,Met behulp van chlorofyl zetten planten CO2 en water om in glucose en zuurstof,
+8,8,Mitochondriën,Mitochondriën zijn de energiecentrales van de cel,"Kern;Mitochondriën;Ribosoom;Golgi-apparaat"
+9,9,H2O,Water bestaat uit 2 waterstofatomen en 1 zuurstofatoom,"H2O;HO2;H2O2;OH"
+10,10,Een base heeft pH > 7, een zuur heeft pH < 7,Basen zijn protonacceptoren, zuren zijn protondonoren,
