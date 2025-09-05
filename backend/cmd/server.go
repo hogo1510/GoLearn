@@ -72,31 +72,32 @@ func getVragen(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	csvPath := filepath.Join("converter", "MockData", "MockVragen.csv")
+	xmlDataDir := "/home/hogo/GolandProjects/GoLearn/backend/converter/dataXML/Sociaal-werk_Beroepsethiek_1"
 
-	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
-		fmt.Printf("Bestand niet gevonden: %s\n", csvPath)
-		http.Error(w, "CSV bestand niet gevonden", http.StatusNotFound)
+	// Controleer of de directory bestaat
+	if _, err := os.Stat(xmlDataDir); os.IsNotExist(err) {
+		fmt.Printf("Directory niet gevonden: %s\n", xmlDataDir)
+		http.Error(w, "XML directory niet gevonden", http.StatusNotFound)
 		return
 	}
 
-	data, err := converter.ReadCSV(csvPath)
+	vragen, err := converter.XmlConverterVragenOnly(xmlDataDir)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Fout bij lezen CSV %s: %v", csvPath, err)
+		errorMsg := fmt.Sprintf("Fout bij verwerken XML bestanden: %v", err)
 		fmt.Println(errorMsg)
-
 		http.Error(w, errorMsg, http.StatusInternalServerError)
 		return
 	}
-	fmt.Printf("CSV goed geladen")
 
-	jsonData, err := json.Marshal(data)
+	fmt.Printf("Aantal vragen geladen: %d\n", len(vragen))
+
+	jsonData, err := json.Marshal(vragen)
 	if err != nil {
-		http.Error(w, "Fout bij lezen van JSON: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Fout bij converteren naar JSON: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	io.WriteString(w, string(jsonData))
+	w.Write(jsonData)
 }
 
 func getAntwoorden(w http.ResponseWriter, r *http.Request) {
@@ -104,43 +105,41 @@ func getAntwoorden(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	csvPath := filepath.Join("converter", "MockData", "MockAntwoorden.csv")
+	xmlDataDir := "/home/hogo/GolandProjects/GoLearn/backend/converter/dataXML/Sociaal-werk_Beroepsethiek_1"
 
-	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
-		fmt.Printf("Bestand niet gevonden: %s\n", csvPath)
-		http.Error(w, "CSV bestand niet gevonden", http.StatusNotFound)
+	if _, err := os.Stat(xmlDataDir); os.IsNotExist(err) {
+		fmt.Printf("Directory niet gevonden: %s\n", xmlDataDir)
+		http.Error(w, "XML directory niet gevonden", http.StatusNotFound)
 		return
 	}
 
-	data, err := converter.ReadCSV(csvPath)
+	vragen, err := converter.XmlConverterAntwoordenOnly(xmlDataDir)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Fout bij lezen CSV %s: %v", csvPath, err)
+		errorMsg := fmt.Sprintf("Fout bij verwerken XML bestanden: %v", err)
 		fmt.Println(errorMsg)
-
 		http.Error(w, errorMsg, http.StatusInternalServerError)
 		return
 	}
-	fmt.Printf("CSV goed geladen")
 
-	jsonData, err := json.Marshal(data)
+	fmt.Printf("Aantal vragen geladen: %d\n", len(vragen))
+
+	jsonData, err := json.Marshal(vragen)
 	if err != nil {
-		http.Error(w, "Fout bij lezen van JSON: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Fout bij converteren naar JSON: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	io.WriteString(w, string(jsonData))
+	w.Write(jsonData)
 }
 
 func getAiHelp(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("got /getAiHelp request\n")
 
-	// Alleen POST requests toestaan
 	if r.Method != "POST" {
 		http.Error(w, "Alleen POST requests zijn toegestaan", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Request body lezen
 	var requestData struct {
 		Vraag string `json:"vraag"`
 	}
@@ -151,20 +150,17 @@ func getAiHelp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Controleren of vraag niet leeg is
 	if requestData.Vraag == "" {
 		http.Error(w, "Vraag mag niet leeg zijn", http.StatusBadRequest)
 		return
 	}
 
-	// AI uitleg ophalen
 	uitleg, err := poc.GetChatExplanation(requestData.Vraag)
 	if err != nil {
 		http.Error(w, "Fout bij ophalen AI uitleg: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Response sturen
 	w.Header().Set("Content-Type", "application/json")
 	response := map[string]string{
 		"vraag":  requestData.Vraag,

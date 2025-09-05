@@ -1,6 +1,8 @@
 package main
 
-import "backend/cmd"
+import (
+	"backend/cmd"
+)
 
 func main() {
 	cmd.OpenServ()
