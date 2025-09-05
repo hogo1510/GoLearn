@@ -36,7 +36,7 @@ func GetChatExplanation(question string) (string, error) {
 	}
 
 	// Probeer verschillende modellen in volgorde van voorkeur
-	models := []string{"mistral", "mixtral", "gemma", "llama2-uncensored", "llama2"}
+	models := []string{"mistral", "mixtral", "gemma", "llama2-uncensored" /*,"llama2"*/} //wordt nog niet gebruikt
 
 	for _, model := range models {
 		fmt.Printf("Proberen model: %s...\n", model)
@@ -89,7 +89,7 @@ Geef alleen methodische uitleg over deze social work vraag: %s [/INST]`, questio
 		return "", err
 	}
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 60 * time.Second}
 	resp, err := client.Post(
 		"http://localhost:11434/api/generate",
 		"application/json",

@@ -72,8 +72,7 @@ func getVragen(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	//TODO change to static
-	xmlDataDir := "/home/hogo/GolandProjects/GoLearn/backend/converter/dataXML/Sociaal-werk_Beroepsethiek_1"
+	xmlDataDir := "converter/dataXML/Sociaal-werk_Beroepsethiek_1"
 
 	// Controleer of de directory bestaat
 	if _, err := os.Stat(xmlDataDir); os.IsNotExist(err) {
@@ -106,8 +105,7 @@ func getAntwoorden(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	//TODO change to static
-	xmlDataDir := "/home/hogo/GolandProjects/GoLearn/backend/converter/dataXML/Sociaal-werk_Beroepsethiek_1"
+	xmlDataDir := "converter/dataXML/Sociaal-werk_Beroepsethiek_1"
 
 	if _, err := os.Stat(xmlDataDir); os.IsNotExist(err) {
 		fmt.Printf("Directory niet gevonden: %s\n", xmlDataDir)
