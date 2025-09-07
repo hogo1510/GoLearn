@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assessmentItem xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" title="" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1p1.xsd" timeDependent="false" adaptive="false" identifier="orderInteraction_ARANGE_TEXT_759be73bae" toolName="quayn" toolVersion="2" xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1">
+  <responseDeclaration identifier="RESPONSE" baseType="identifier" cardinality="ordered">
+    <correctResponse>
+      <value>A1</value>
+      <value>A2</value>
+      <value>A3</value>
+      <value>A4</value>
+      <value>A5</value>
+    </correctResponse>
+  </responseDeclaration>
+  <outcomeDeclaration identifier="SCORE" baseType="float" cardinality="single" />
+  <outcomeDeclaration identifier="MAXSCORE" baseType="float" cardinality="single">
+    <defaultValue>
+      <value>1</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="PENALTY" baseType="float" cardinality="single">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <itemBody>
+    <div>
+      <p>Zet het stappenplan van de meldcode in de juiste volgorde.</p>
+    </div>
+    <orderInteraction responseIdentifier="RESPONSE" shuffle="true">
+      <simpleChoice identifier="A1"><![CDATA[Breng signalen in kaart.]]></simpleChoice>
+      <simpleChoice identifier="A2"><![CDATA[Overleg met een deskundige collega of veilig thuis.]]></simpleChoice>
+      <simpleChoice identifier="A3"><![CDATA[Praat met ouders of verzorgers.]]></simpleChoice>
+      <simpleChoice identifier="A4"><![CDATA[Weeg het geweld.]]></simpleChoice>
+      <simpleChoice identifier="A5"><![CDATA[Beslis: Is melden nodig? Is hulpverlening nodig?]]></simpleChoice>
+    </orderInteraction>
+  </itemBody>
+  <responseProcessing>
+    <responseCondition>
+      <responseIf>
+        <match>
+          <variable identifier="RESPONSE" />
+          <correct identifier="RESPONSE" />
+        </match>
+        <setOutcomeValue identifier="SCORE">
+          <variable identifier="MAXSCORE" />
+        </setOutcomeValue>
+      </responseIf>
+      <responseElse>
+        <setOutcomeValue identifier="SCORE">
+          <baseValue baseType="float">0</baseValue>
+        </setOutcomeValue>
+      </responseElse>
+    </responseCondition>
+  </responseProcessing>
+</assessmentItem>

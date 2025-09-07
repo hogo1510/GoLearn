@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assessmentItem xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" title="" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1p1.xsd" timeDependent="false" adaptive="false" identifier="choiceInteraction_LARGESOURCE_MANYCHOICE_69b16274af" toolName="quayn" toolVersion="2" xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1">
+  <responseDeclaration identifier="RESPONSE" baseType="identifier" cardinality="multiple">
+    <correctResponse>
+      <value>A1</value>
+      <value>A2</value>
+      <value>A5</value>
+    </correctResponse>
+    <mapping lowerBound="0" upperBound="1" defaultValue="0">
+      <mapEntry mapKey="A1" mappedValue="0.333333343" />
+      <mapEntry mapKey="A2" mappedValue="0.333333343" />
+      <mapEntry mapKey="A3" mappedValue="0" />
+      <mapEntry mapKey="A4" mappedValue="0" />
+      <mapEntry mapKey="A5" mappedValue="0.333333343" />
+      <mapEntry mapKey="A6" mappedValue="0" />
+    </mapping>
+  </responseDeclaration>
+  <outcomeDeclaration identifier="SCORE" baseType="float" cardinality="single" />
+  <outcomeDeclaration identifier="MAXSCORE" baseType="float" cardinality="single">
+    <defaultValue>
+      <value>1</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="PENALTY" baseType="float" cardinality="single">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <itemBody>
+    <div>
+      <p>Kinderen van 6 tot 12 jaar noemen we schoolkinderen. Deze periode kenmerkt zich doordat kinderen steeds meer gericht zijn op een aantal aspecten. Welke <strong>drie</strong> aspecten zijn dat?</p>
+    </div>
+    <choiceInteraction responseIdentifier="RESPONSE" shuffle="true" minChoices="0" maxChoices="0">
+      <simpleChoice identifier="A1" fixed="false" showHide="show"><![CDATA[Leeftijdsgenoten]]></simpleChoice>
+      <simpleChoice identifier="A2" fixed="false" showHide="show"><![CDATA[Werkelijkheid]]></simpleChoice>
+      <simpleChoice identifier="A3" fixed="false" showHide="show"><![CDATA[Beroepskeuze]]></simpleChoice>
+      <simpleChoice identifier="A4" fixed="false" showHide="show"><![CDATA[Oudere kinderen]]></simpleChoice>
+      <simpleChoice identifier="A5" fixed="false" showHide="show"><![CDATA[Zelfstandigheid]]></simpleChoice>
+      <simpleChoice identifier="A6" fixed="false" showHide="show"><![CDATA[Ouders]]></simpleChoice>
+    </choiceInteraction>
+  </itemBody>
+  <responseProcessing template="http://www.imsglobal.org/question/qti_v2p1/rptemplates/map_response" />
+</assessmentItem>
