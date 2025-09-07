@@ -29,7 +29,7 @@
     </div>
     <choiceInteraction responseIdentifier="RESPONSE" shuffle="true" minChoices="0" maxChoices="1">
       <simpleChoice identifier="A1" fixed="false" showHide="show"><![CDATA[Waar]]></simpleChoice>
-      <simpleChoice identifier="A2" fixed="false" showHide="show"><![CDATA[]]></simpleChoice>
+      <simpleChoice identifier="A2" fixed="false" showHide="show"><![CDATA[Niet Waar]]></simpleChoice>
     </choiceInteraction>
   </itemBody>
   <responseProcessing template="http://www.imsglobal.org/question/qti_v2p1/rptemplates/map_response" />
