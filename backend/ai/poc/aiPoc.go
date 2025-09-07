@@ -36,7 +36,7 @@ func GetChatExplanation(question string) (string, error) {
 	}
 
 	// Probeer verschillende modellen in volgorde van voorkeur
-	models := []string{"mistral", "mixtral", "gemma", "llama2-uncensored", "llama2"}
+	models := []string{"mistral", "mixtral", "gemma", "llama2-uncensored" /*,"llama2"*/} //wordt nog niet gebruikt
 
 	for _, model := range models {
 		fmt.Printf("Proberen model: %s...\n", model)
@@ -62,7 +62,8 @@ REGELS:
 3. Maximaal 2 zinnen
 4. Focus op beroepswaarden en methodisch handelen
 5. Geen oplossingen, alleen uitleg over het concept
-6. Nederlands
+6. Nooit het directe antwoord geven 
+7. Nederlands
 
 Voorbeeld:
 Vraag: "Hoe omgaan met agressieve cliënt?"
@@ -88,7 +89,7 @@ Geef alleen methodische uitleg over deze social work vraag: %s [/INST]`, questio
 		return "", err
 	}
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 60 * time.Second}
 	resp, err := client.Post(
 		"http://localhost:11434/api/generate",
 		"application/json",
@@ -179,22 +180,73 @@ func isOllamaRunning() bool {
 }
 
 func getSocialWorkFallback(question string) string {
-	// Gerichte fallbacks based on question content
-	if contains(question, []string{"ethisch", "ethiek", "dilemma", "waarden"}) {
-		return "Deze situatie roept belangrijke ethische vragen op voor social professionals. Reflecteer op de beroepscode en morele afwegingen in het handelen."
-	}
-	if contains(question, []string{"agressie", "veiligheid", "conflict", "weerstand"}) {
-		return "Deze casus raakt aan veiligheid en de-escalatie in social work. Denk na over professionele boundary-setting en methodische benaderingen."
-	}
-	if contains(question, []string{"systeem", "gezin", "familie", "netwerk"}) {
-		return "Deze vraag betreft systeemgericht werken in social work. Overweeg de dynamieken binnen sociale netwerken en contextuele factoren."
-	}
-	if contains(question, []string{"macht", "kwetsbaar", "empowerment", "zelfredzaam"}) {
-		return "Deze situatie gaat over machtsdynamiek en empowerment in hulpverleningsrelaties. Reflecteer op positionering en gelijkwaardigheid."
+	// Ethische dilemma's en beroepscode
+	if contains(question, []string{"ethisch", "ethiek", "dilemma", "waarden", "moreel", "beroepscode", "integriteit", "principes"}) {
+		return "Deze situatie roept belangrijke ethische vragen op voor social professionals. Reflecteer op de beroepscode, morele afwegingen, integriteit en professionele grenzen in het handelen."
 	}
 
-	// Generieke fallback
-	return "Deze social work casus vereist methodische afweging en reflectie op beroepswaarden. Denk na over welke principes en benaderingen relevant zijn."
+	// Veiligheid en agressie
+	if contains(question, []string{"agressie", "veiligheid", "conflict", "weerstand", "geweld", "bedreiging", "de-escalatie", "calamiteit"}) {
+		return "Deze casus raakt aan veiligheid en de-escalatie in social work. Denk na over professionele boundary-setting, risicotaxatie, methodische benaderingen en protocolvolgend handelen."
+	}
+
+	// Systeemgericht werken
+	if contains(question, []string{"systeem", "gezin", "familie", "netwerk", "context", "omgeving", "sociaal", "relaties", "dynamiek"}) {
+		return "Deze vraag betreft systeemgericht werken in social work. Overweeg de dynamieken binnen sociale netwerken, contextuele factoren, ecologische benadering en gezinsperspectief."
+	}
+
+	// Macht en empowerment
+	if contains(question, []string{"macht", "kwetsbaar", "empowerment", "zelfredzaam", "autonomie", "gelijkwaardig", "participatie", "regie"}) {
+		return "Deze situatie gaat over machtsdynamiek en empowerment in hulpverleningsrelaties. Reflecteer op positionering, gelijkwaardigheid, cliëntregie en versterkend werken."
+	}
+
+	// Methodiek en interventies
+	if contains(question, []string{"method", "interventie", "aanpak", "werkwijze", "techniek", "gesprek", "begeleiding", "ondersteuning"}) {
+		return "Deze casus vereist methodische afweging. Denk na over evidence-based interventies, gesprekstechnieken, methodisch handelen en effectieve ondersteuningsvormen."
+	}
+
+	// Recht en kader
+	if contains(question, []string{"wet", "recht", "regelgeving", "protocol", "beleid", "kader", "juridisch", "wmo", "jeugdwet"}) {
+		return "Deze vraag raakt aan juridische kaders in social work. Overweeg relevante wetgeving, professionele standaarden, beleidskaders en rechtspositionele aspecten."
+	}
+
+	// Diversiteit en inclusie
+	if contains(question, []string{"diversiteit", "inclusie", "cultuur", "achtergrond", "migratie", "geloof", "religie", "lhbti", "discriminatie"}) {
+		return "Deze situatie betreft diversiteit en inclusie in social work. Reflecteer op culturele sensitiviteit, intersectionaliteit, antidiscriminatie en inclusieve benadering."
+	}
+
+	// Zorg en welzijn
+	if contains(question, []string{"zorg", "welzijn", "hulpverlening", "ondersteuning", "begeleiding", "zorgvraag", "ondersteuningsbehoefte"}) {
+		return "Deze casus gaat over zorg en welzijn in social work. Denk na over ondersteuningsbehoeften, zorgcoördinatie, multidisciplinaire samenwerking en kwaliteit van leven."
+	}
+
+	// Jeugd en gezin
+	if contains(question, []string{"jeugd", "kind", "jongere", "opvoeding", "ouder", "gezinsvoogd", "jeugdzorg", "pleegzorg"}) {
+		return "Deze vraag betreft jeugd en gezin in social work. Overweeg ontwikkelingsperspectief, pedagogische benadering, veiligheidsafwegingen en gezinsgerichte interventies."
+	}
+
+	// Schulden en armoede
+	if contains(question, []string{"schuld", "armoede", "geld", "financieel", "budget", "minima", "bijstand", "schulhulp"}) {
+		return "Deze situatie raakt aan armoede en schuldenproblematiek in social work. Denk na over financiële zelfredzaamheid, schuldhulpverlening, armoedebestrijding en preventie."
+	}
+
+	// Verslaving en GGZ
+	if contains(question, []string{"verslaving", "ggz", "psychisch", "mental", "gedrag", "verslaafd", "middelen", "afhankelijkheid"}) {
+		return "Deze casus betreft verslaving en geestelijke gezondheid in social work. Overweeg herstelgerichte benadering, motiverende gespreksvoering, samenwerking met GGZ en stigma-reductie."
+	}
+
+	// Ouderen en mantelzorg
+	if contains(question, []string{"ouderen", "bejaard", "senior", "mantelzorg", "dementie", "ouderenzorg", "veroudering"}) {
+		return "Deze vraag gaat over ouderen en mantelzorg in social work. Denk na over waardigheid, zelfbepaling, mantelzorgondersteuning en levensloopbenadering."
+	}
+
+	// Huiselijk geweld
+	if contains(question, []string{"huiselijk geweld", "kindermishandeling", "partnergeweld", "mishandeling", "verwaarlozing", "veilig thuis"}) {
+		return "Deze situatie betreft huiselijk geweld in social work. Reflecteer op meldcode, veiligheidsplanning, traumasensitief handelen en multidisciplinaire aanpak."
+	}
+
+	// Generieke fallback met meer specifieke social work context
+	return "Deze social work casus vereist methodische afweging en reflectie op beroepswaarden. Denk na over welke principes, benaderingen, interventies en ethische kaders relevant zijn binnen de context van sociaal werk."
 }
 
 func contains(text string, keywords []string) bool {

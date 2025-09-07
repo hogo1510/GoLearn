@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assessmentItem xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" title="" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1p1.xsd" timeDependent="false" adaptive="false" identifier="choiceInteraction_LARGESOURCE_MULTIPLECHOICE_0c6b16daaf" toolName="quayn" toolVersion="2" xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1">
+  <responseDeclaration identifier="RESPONSE" baseType="identifier" cardinality="single">
+    <correctResponse>
+      <value>A1</value>
+    </correctResponse>
+    <mapping lowerBound="0" upperBound="1" defaultValue="0">
+      <mapEntry mapKey="A1" mappedValue="1" />
+      <mapEntry mapKey="A2" mappedValue="0" />
+    </mapping>
+  </responseDeclaration>
+  <outcomeDeclaration identifier="SCORE" baseType="float" cardinality="single" />
+  <outcomeDeclaration identifier="MAXSCORE" baseType="float" cardinality="single">
+    <defaultValue>
+      <value>1</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="PENALTY" baseType="float" cardinality="single">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <itemBody>
+    <div>
+      <p>
+  <strong>Is de volgende stelling waar of niet waar?</strong>
+  <br />
+  <br />De beroepsethiek is een verzameling van geschreven en ongeschreven normen en waarden voor het professioneel uitvoeren van het beroep. </p>
+    </div>
+    <choiceInteraction responseIdentifier="RESPONSE" shuffle="true" minChoices="0" maxChoices="1">
+      <simpleChoice identifier="A1" fixed="false" showHide="show"><![CDATA[Waar]]></simpleChoice>
+      <simpleChoice identifier="A2" fixed="false" showHide="show"><![CDATA[]]></simpleChoice>
+    </choiceInteraction>
+  </itemBody>
+  <responseProcessing template="http://www.imsglobal.org/question/qti_v2p1/rptemplates/map_response" />
+</assessmentItem>
