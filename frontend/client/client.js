@@ -1,3 +1,4 @@
+// client.js aanpassingen
 const API_BASE_URL = 'http://localhost:3333';
 
 async function apiAanroep(endpoint) {
@@ -8,13 +9,25 @@ async function apiAanroep(endpoint) {
         }
         const data = await response.json();
         console.log(data);
-        return data;
+        return data; // Deze return was waarschijnlijk al aanwezig
     } catch (error) {
         console.error('Fout bij API-aanroep:', error);
         throw error;
     }
 }
 
+// Deze functie moet de data returnen in plaats van alleen te loggen
+async function getvragen() {
+    try {
+        const data = await apiAanroep('/getVragen');
+        return data; // Return de data zodat de quiz deze kan gebruiken
+    } catch (error) {
+        console.error('Fout bij ophalen vragen:', error);
+        throw error; // Gooi de error opnieuw zodat de quiz deze kan afhandelen
+    }
+}
+
+// De andere functies blijven hetzelfde
 function getRoot() {
     apiAanroep('/')
         .catch(error => console.error('Fout bij ophalen root:', error));
@@ -23,11 +36,6 @@ function getRoot() {
 function getExams() {
     apiAanroep('/getExams')
         .catch(error => console.error('Fout bij ophalen examens:', error));
-}
-
-function getvragen() {
-    apiAanroep('/getVragen')
-        .catch(error => console.error('Fout bij ophalen vragen:', error));
 }
 
 function getAntwoorden() {
@@ -57,3 +65,9 @@ async function getAIHelp(vraag) {
         toonFout('Kon geen AI-uitleg krijgen: ' + error.message);
     }
 }
+
+// Zorg ervoor dat de functies beschikbaar zijn in de globale scope
+window.getvragen = getvragen;
+window.getExams = getExams;
+window.getAntwoorden = getAntwoorden;
+window.getAIHelp = getAIHelp;
