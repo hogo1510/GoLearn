@@ -1,0 +1,138 @@
+body {
+    margin: 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #0c0c2b 0%, #1a1a4a 100%);
+    font-family: 'Arial', sans-serif;
+    color: #fff;
+    overflow: hidden;
+}
+
+.game-container {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    background: #000;
+    border: 3px solid #00ffff;
+    border-radius: 10px;
+    box-shadow: 0 0 20px #00ffff;
+}
+
+.question-panel {
+    background: rgba(0, 255, 255, 0.1);
+    padding: 15px;
+    border-bottom: 2px solid #00ffff;
+    text-align: center;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.question {
+    font-size: 18px;
+    font-weight: bold;
+    color: #00ffff;
+    text-shadow: 0 0 10px #00ffff;
+}
+
+canvas {
+    display: block;
+    background: #000;
+    image-rendering: pixelated;
+}
+
+.score-panel {
+    background: rgba(0, 255, 255, 0.1);
+    padding: 10px;
+    border-top: 2px solid #00ffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.score, .lives, .level {
+    font-size: 16px;
+    font-weight: bold;
+    color: #00ffff;
+}
+
+.controls {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 14px;
+    color: #aaa;
+}
+
+.game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 30px;
+    border: 2px solid #ff0000;
+    border-radius: 10px;
+    text-align: center;
+    display: none;
+}
+
+.loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 30px;
+    border: 2px solid #00ffff;
+    border-radius: 10px;
+    text-align: center;
+    display: block;
+}
+
+.restart-btn {
+    background: #00ffff;
+    color: #000;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.restart-btn:hover {
+    background: #fff;
+}
+
+.feedback {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 20px;
+    font-weight: bold;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.feedback.correct {
+    color: #00ff00;
+}
+
+.feedback.incorrect {
+    color: #ff0000;
+}
+
+.feedback.show {
+    opacity: 1;
+}
+
+.error {
+    color: #ff6666;
+    background: rgba(255, 102, 102, 0.1);
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+}
