@@ -92,6 +92,7 @@ func XmlConverter(options XmlConverterOptions) ([]Vraag, []Antwoord, error) {
 	dataDir := options.DataDir
 	if dataDir == "" {
 		dataDir = "backend/converter/dataXML/Sociaal-werk_Beroepsethiek_1"
+		//TODO: make generiek
 	}
 
 	var alleVragen []Vraag
