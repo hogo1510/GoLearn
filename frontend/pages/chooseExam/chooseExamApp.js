@@ -39,14 +39,18 @@ function createExamCard(examen) {
     //Categorie-klassen voor opmaak
     // TODO: SW Specifiek
     const categorieën = {
-        'wiskunde': 'wiskunde',
-        'nederlands': 'talen',
-        'engels': 'talen',
-        'natuurkunde': 'natuur',
-        'scheikunde': 'natuur',
-        'biologie': 'natuur',
-        'geschiedenis': 'maatschappij',
-        'aardrijkskunde': 'maatschappij'
+        'methodiek': 'methodiek',
+        'recht': 'recht',
+        'psychologie': 'psychologie',
+        'sociologie': 'sociologie',
+        'agogiek': 'agogiek',
+        'communicatie': 'communicatie',
+        'onderzoek': 'onderzoek',
+        'beleid': 'beleid',
+        'zorg': 'zorg',
+        'jeugd': 'jeugd',
+        'welzijn': 'welzijn',
+        'diversiteit': 'diversiteit'
     };
 
     const categorieClass = categorieën[examen.categorie] || 'algemeen';
