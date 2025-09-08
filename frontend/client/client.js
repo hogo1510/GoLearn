@@ -9,38 +9,40 @@ async function apiAanroep(endpoint) {
         }
         const data = await response.json();
         console.log(data);
-        return data; // Deze return was waarschijnlijk al aanwezig
+        return data;
     } catch (error) {
         console.error('Fout bij API-aanroep:', error);
         throw error;
     }
 }
 
-// Deze functie moet de data returnen in plaats van alleen te loggen
 async function getvragen() {
     try {
         const data = await apiAanroep('/getVragen');
-        return data; // Return de data zodat de quiz deze kan gebruiken
+        return data;
     } catch (error) {
         console.error('Fout bij ophalen vragen:', error);
-        throw error; // Gooi de error opnieuw zodat de quiz deze kan afhandelen
+        throw error;
+    }
+}
+async function getAntwoorden() {
+    try {
+        const data = await apiAanroep('/getAntwoorden');
+        return data; // RETURN de data
+    } catch (error) {
+        console.error('Fout bij ophalen antwoorden:', error);
+        throw error; // Gooi de error opnieuw
     }
 }
 
-// De andere functies blijven hetzelfde
 function getRoot() {
-    apiAanroep('/')
+    return apiAanroep('/')
         .catch(error => console.error('Fout bij ophalen root:', error));
 }
 
 function getExams() {
-    apiAanroep('/getExams')
+    return apiAanroep('/getExams')
         .catch(error => console.error('Fout bij ophalen examens:', error));
-}
-
-function getAntwoorden() {
-    apiAanroep('/getAntwoorden')
-        .catch(error => console.error('Fout bij ophalen antwoorden:', error));
 }
 
 async function getAIHelp(vraag) {
@@ -63,10 +65,10 @@ async function getAIHelp(vraag) {
     } catch (error) {
         console.error('Fout bij AI-aanroep:', error);
         toonFout('Kon geen AI-uitleg krijgen: ' + error.message);
+        throw error;
     }
 }
 
-// Zorg ervoor dat de functies beschikbaar zijn in de globale scope
 window.getvragen = getvragen;
 window.getExams = getExams;
 window.getAntwoorden = getAntwoorden;
