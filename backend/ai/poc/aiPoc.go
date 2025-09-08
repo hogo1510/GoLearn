@@ -6,28 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 )
-
-func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Geef een social work vraag op als argument")
-		return
-	}
-
-	question := strings.Join(os.Args[1:], " ")
-	explanation, err := GetChatExplanation(question)
-
-	if err != nil {
-		fmt.Printf("Fout: %v\n", err)
-		return
-	}
-
-	fmt.Printf("Vraag: %s\n\n", question)
-	fmt.Printf("Uitleg: %s\n", explanation)
-}
 
 func GetChatExplanation(question string) (string, error) {
 	// Eerst controleren of Ollama server beschikbaar is
@@ -41,7 +22,9 @@ func GetChatExplanation(question string) (string, error) {
 	for _, model := range models {
 		fmt.Printf("Proberen model: %s...\n", model)
 		explanation, err := tryWithModel(question, model)
-		if err == nil && isValidSocialWorkExplanation(explanation) {
+		if err == nil /*&& isValidSocialWorkExplanation(explanation) */ {
+			fmt.Printf("vraag: %s\n", question)
+			fmt.Printf("Explanation: %s\n", explanation)
 			return explanation, nil
 		}
 		time.Sleep(100 * time.Millisecond) // Korte pauze
@@ -139,39 +122,39 @@ func cleanResponse(response string) string {
 	return strings.TrimSpace(response)
 }
 
-func isValidSocialWorkExplanation(text string) bool {
-	// Check of het een valide social work uitleg is
-	if text == "" || len(text) < 20 {
-		return false
-	}
-
-	// Check op verboden woorden (directe adviezen)
-	forbiddenWords := []string{
-		" moet ", " ga ", " bel ", " schakel ", " neem contact op met ",
-		" adviseer ", " raad aan ", " zoek ", " vraag aan ", " doe ",
-	}
-
-	for _, word := range forbiddenWords {
-		if strings.Contains(strings.ToLower(text), word) {
-			return false
-		}
-	}
-
-	// Check op gewenste social work termen
-	desiredWords := []string{
-		"social work", "method", "ethisch", "beroepswaarden", "principe",
-		"benadering", "reflectie", "cliënt", "hulpverlening", "systeem",
-	}
-
-	found := 0
-	for _, word := range desiredWords {
-		if strings.Contains(strings.ToLower(text), word) {
-			found++
-		}
-	}
-
-	return found >= 2 // Minimaal 2 social work termen
-}
+//func isValidSocialWorkExplanation(text string) bool {
+//	// Check of het een valide social work uitleg is
+//	if text == "" || len(text) < 20 {
+//		return false
+//	}
+//
+//	// Check op verboden woorden (directe adviezen)
+//	forbiddenWords := []string{
+//		" moet ", " ga ", " bel ", " schakel ", " neem contact op met ",
+//		" adviseer ", " raad aan ", " zoek ", " vraag aan ", " doe ",
+//	}
+//
+//	for _, word := range forbiddenWords {
+//		if strings.Contains(strings.ToLower(text), word) {
+//			return false
+//		}
+//	}
+//
+//	// Check op gewenste social work termen
+//	desiredWords := []string{
+//		"social work", "method", "ethisch", "beroepswaarden", "principe",
+//		"benadering", "reflectie", "cliënt", "hulpverlening", "systeem",
+//	}
+//
+//	found := 0
+//	for _, word := range desiredWords {
+//		if strings.Contains(strings.ToLower(text), word) {
+//			found++
+//		}
+//	}
+//
+//	return found >= 2 // Minimaal 2 social work termen
+//}
 
 func isOllamaRunning() bool {
 	client := &http.Client{Timeout: 2 * time.Second}

@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 )
 
 // CORS middleware voor http.HandlerFunc
@@ -35,36 +35,25 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, `{"message": "main site", "status": "ok"}`)
 }
 
-func getExamns(w http.ResponseWriter, r *http.Request) {
+func getExams(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("got /getExams request\n")
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	csvPath := filepath.Join("converter", "MockData", "MockExams.csv")
-
-	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
-		fmt.Printf("Bestand niet gevonden: %s\n", csvPath)
-		http.Error(w, "CSV bestand niet gevonden", http.StatusNotFound)
-		return
+	type Exam struct {
+		id   int    `json:"id"`
+		name string `json:"name"`
 	}
 
-	data, err := converter.ReadCSV(csvPath)
+	entries, err := os.ReadDir("../backend/converter/dataXML")
 	if err != nil {
-		errorMsg := fmt.Sprintf("Fout bij lezen CSV %s: %v", csvPath, err)
-		fmt.Println(errorMsg)
-
-		http.Error(w, errorMsg, http.StatusInternalServerError)
-		return
-	}
-	fmt.Printf("CSV goed geladen")
-
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		http.Error(w, "Fout bij lezen van JSON: "+err.Error(), http.StatusInternalServerError)
-		return
+		log.Fatal(err)
 	}
 
-	io.WriteString(w, string(jsonData))
+	for _, e := range entries {
+		fmt.Println(e.Name())
+	}
+
 }
 
 func getVragen(w http.ResponseWriter, r *http.Request) {
@@ -178,7 +167,7 @@ func getAiHelp(w http.ResponseWriter, r *http.Request) {
 
 func OpenServ() {
 	http.HandleFunc("/", corsMiddleware(getRoot))
-	http.HandleFunc("/getExams", corsMiddleware(getExamns))
+	http.HandleFunc("/getExams", corsMiddleware(getExams))
 	http.HandleFunc("/getVragen", corsMiddleware(getVragen))
 	http.HandleFunc("/getAntwoorden", corsMiddleware(getAntwoorden))
 	http.HandleFunc("/getAiHelp", corsMiddleware(getAiHelp))
