@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examenselectie</title>
+    <link rel="stylesheet" href="chooseExamStyle.css">
+</head>
+<body>
+<header>
+    <h1>Examenselectie</h1>
+    <p>Kies een examen om te oefenen</p>
+</header>
+
+<div class="container">
+    <div id="loading" class="loading">
+        Examens laden...
+    </div>
+
+    <div id="error-message" class="error" style="display: none;"></div>
+
+    <div id="exams-container" class="exams-grid" style="display: none;">
+        <!-- Examens worden hier dynamisch ingeladen -->
+    </div>
+
+    <div id="vragen-container" class="vragen-container">
+        <!-- Vragen en antwoorden worden hier getoond -->
+    </div>
+</div>
+
+<!-- Externe client.js -->
+<script src="../../client/client.js"></script>
+<script src="chooseExamApp.js"></script>
+</body>
+</html>
