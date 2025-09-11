@@ -59,7 +59,7 @@ function createExamCard(examen) {
     //TODO: fix quiz path
     card.innerHTML = `
                 <div class="exam-header">
-                    <h3 class="exam-title">${examen.naam}</h3>
+                    <h3 class="exam-title">${examen.name}</h3>
                 </div>
                 <div class="exam-body">
                     <p class="exam-info">${examen.beschrijving || 'Onkbekende beschrijving'}</p>
@@ -95,7 +95,7 @@ async function loadExam(examen) {
         // Toon laadindicator
         document.getElementById('exams-container').style.display = 'none';
         document.getElementById('loading').style.display = 'block';
-        document.getElementById('loading').textContent = `Vragen laden voor ${examen.naam}...`;
+        document.getElementById('loading').textContent = `Vragen laden voor ${examen.name}...`;
 
         // Haal vragen en antwoorden op met functies uit client.js
         const vragen = await getvragen();
@@ -108,8 +108,8 @@ async function loadExam(examen) {
         const vragenContainer = document.getElementById('vragen-container');
         vragenContainer.innerHTML = `
                     <button class="back-button" onclick="showExams()">← Terug naar examens</button>
-                    <a href="../../quiz/quiz.html?examenId=${examen.id}" class="quiz-button" style="display: inline-block; margin-bottom: 20px;">Start Quiz voor ${examen.naam}</a>
-                    <h2>${examen.naam}</h2>
+                    <a href="../../quiz/quiz.html?examenId=${examen.id}" class="quiz-button" style="display: inline-block; margin-bottom: 20px;">Start Quiz voor ${examen.name}</a>
+                    <h2>${examen.name}</h2>
                     <p>${examen.beschrijving || ''}</p>
                 `;
 
@@ -144,7 +144,7 @@ function createVraagElement(vraag, index, antwoorden) {
     vraagDiv.className = 'vraag-card';
 
     // Escape speciale tekens in de vraagtekst voor gebruik in een string
-    const escapedVraagText = vraag.text ? vraag.text.replace(/'/g, "\\'").replace(/"/g, '\\"') : '';
+    const escapedVraagText = vraag.text ? vraag.text.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, ' ') : '';
 
     vraagDiv.innerHTML = `
                 <div class="vraag-nummer">Vraag ${index + 1}</div>
