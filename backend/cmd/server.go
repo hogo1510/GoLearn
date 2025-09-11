@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 )
@@ -41,19 +40,34 @@ func getExams(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	type Exam struct {
-		id   int    `json:"id"`
-		name string `json:"name"`
+		ID   int    `json:"id"`
+		Name string `json:"name"`
 	}
 
 	entries, err := os.ReadDir("../backend/converter/dataXML")
 	if err != nil {
-		log.Fatal(err)
+		http.Error(w, "Fout bij lezen directory: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	for _, e := range entries {
-		fmt.Println(e.Name())
+	// Maak examens van directory entries
+	examens := make([]Exam, 0)
+	for i, e := range entries {
+		if e.IsDir() {
+			examens = append(examens, Exam{
+				ID:   i + 1,
+				Name: e.Name(),
+			})
+		}
 	}
 
+	jsonData, err := json.Marshal(examens)
+	if err != nil {
+		http.Error(w, "Fout bij converteren naar JSON: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(jsonData)
 }
 
 func getVragen(w http.ResponseWriter, r *http.Request) {
