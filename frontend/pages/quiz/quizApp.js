@@ -1,12 +1,31 @@
+// Functie om URL parameters te lezen
+function getURLParameter(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+}
+
 // API functie die gebruik maakt van de bestaande getvragen() functie
-async function getVragen() {
+async function getVragen(examenId = null) {
     try {
         // Roep de bestaande getvragen() functie aan vanuit client.js
-        const response = await window.getvragen();
+        const response = await window.getvragen(examenId);
+        console.log('Raw response from server:', response);
         return response;
     } catch (error) {
         console.error('Fout bij het ophalen van vragen:', error);
         throw new Error('Kon vragen niet ophalen');
+    }
+}
+
+// API functie om antwoorden op te halen
+async function getAntwoorden(examenId = null) {
+    try {
+        const response = await window.getAntwoorden(examenId);
+        console.log('Raw antwoorden from server:', response);
+        return response;
+    } catch (error) {
+        console.error('Fout bij het ophalen van antwoorden:', error);
+        throw new Error('Kon antwoorden niet ophalen');
     }
 }
 
@@ -66,7 +85,7 @@ function getMotivationalMessage(score, totalQuestions, rank) {
     if (percentage >= 90) {
         return "Uitstekend! Je beheerst beroepsethiek echt goed! 🌟";
     } else if (percentage >= 80) {
-        return "Zeer goed gedaan! Je hebt een sterke basis in beroepsethiek! 👏";
+        return "Zeer goed gedaan! Je hebt een sterke basis in beroepsethiek! 👍";
     } else if (percentage >= 70) {
         return "Goed werk! Er is nog ruimte voor verbetering, maar je bent op de goede weg! 💪";
     } else if (percentage >= 60) {
@@ -90,26 +109,106 @@ document.addEventListener('DOMContentLoaded', async function() {
     const aiUitlegContainer = document.getElementById('ai-uitleg');
 
     let vragen = [];
+    let antwoorden = [];
     let huidigeVraagIndex = 0;
-    let antwoorden = {};
+    let userAntwoorden = {};
     let score = 0;
     let aiHelpBeschikbaar = false;
+    let examenId = null;
+    let examenNaam = 'Beroepsethiek Quiz';
+
+    // Check voor examen ID in URL parameters
+    examenId = getURLParameter('examenId');
+    const examenNaamParam = getURLParameter('examenNaam');
+
+    if (examenNaamParam) {
+        examenNaam = decodeURIComponent(examenNaamParam);
+        document.querySelector('h1').textContent = examenNaam;
+        document.querySelector('.description').textContent = `Test je kennis over ${examenNaam.toLowerCase()}`;
+    }
 
     // Toon laadstatus
     quizContent.innerHTML = '<div class="loading">Vragen laden...</div>';
 
     try {
-        // Vragen ophalen van de API
-        vragen = await getVragen();
+        // Vragen ophalen van de API met examen ID
+        console.log('Ophalen vragen voor examenId:', examenId);
+        vragen = await getVragen(examenId);
+        console.log('Vragen geladen:', vragen);
 
-        // Verwijder lege antwoordopties
-        vragen.forEach(vraag => {
-            vraag.keuzes = vraag.keuzes.filter(keuze => keuze.text.trim() !== '');
+        if (!vragen || vragen.length === 0) {
+            throw new Error('Geen vragen gevonden voor dit examen');
+        }
+
+        // Probeer antwoorden op te halen, maar faal niet als het niet lukt
+        try {
+            antwoorden = await getAntwoorden(examenId);
+            console.log('Antwoorden geladen:', antwoorden);
+        } catch (antwoordenError) {
+            console.warn('Kon antwoorden niet laden, gebruik vragen structuur:', antwoordenError);
+            antwoorden = [];
+        }
+
+        // Combineer vragen met hun antwoorden
+        vragen = vragen.map(vraag => {
+            let keuzes = [];
+
+            if (antwoorden && antwoorden.length > 0) {
+                // Vind antwoorden die bij deze vraag horen
+                const vraagAntwoorden = antwoorden.filter(antwoord =>
+                    antwoord.vraagID === vraag.id || antwoord.questionId === vraag.id
+                );
+
+                keuzes = vraagAntwoorden.map((antwoord, index) => ({
+                    id: antwoord.id || `${vraag.id}_${index}`,
+                    text: antwoord.text || antwoord.antwoord || 'Geen antwoord',
+                    isCorrect: antwoord.isCorrect || antwoord.correct || false
+                }));
+            } else {
+                // Fallback: gebruik de antwoorden die mogelijk al in de vraag zitten
+                if (vraag.keuzes && Array.isArray(vraag.keuzes)) {
+                    keuzes = vraag.keuzes.map((keuze, index) => ({
+                        id: keuze.id || `${vraag.id}_${index}`,
+                        text: keuze.text || keuze.antwoord || `Optie ${index + 1}`,
+                        isCorrect: keuze.isCorrect || keuze.correct || index === 0 // Eerste optie als default correct
+                    }));
+                } else if (vraag.choices && Array.isArray(vraag.choices)) {
+                    keuzes = vraag.choices.map((choice, index) => ({
+                        id: choice.id || `${vraag.id}_${index}`,
+                        text: choice.text || choice.answer || `Optie ${index + 1}`,
+                        isCorrect: choice.isCorrect || choice.correct || index === 0
+                    }));
+                } else {
+                    // Laatste fallback: maak dummy antwoorden
+                    keuzes = [
+                        { id: `${vraag.id}_0`, text: 'Optie A', isCorrect: true },
+                        { id: `${vraag.id}_1`, text: 'Optie B', isCorrect: false },
+                        { id: `${vraag.id}_2`, text: 'Optie C', isCorrect: false },
+                        { id: `${vraag.id}_3`, text: 'Optie D', isCorrect: false }
+                    ];
+                }
+            }
+
+            // Converteer naar het verwachte formaat
+            return {
+                id: vraag.id,
+                vraagtekst: vraag.text || vraag.vraagtekst || vraag.question || 'Geen vraagtekst',
+                keuzes: keuzes
+            };
         });
 
-        // Initialiseer antwoorden object
+        // Filter vragen zonder geldige antwoorden
+        vragen = vragen.filter(vraag => vraag.keuzes && vraag.keuzes.length > 0);
+
+        console.log('Verwerkte vragen:', vragen);
+
+        if (vragen.length === 0) {
+            throw new Error('Geen vragen met geldige antwoorden gevonden');
+        }
+
+        // Initialiseer user antwoorden object
         vragen.forEach(vraag => {
-            antwoorden[vraag.id] = null;
+            userAntwoorden[vraag.id] = null;
         });
 
         // Toon de eerste vraag
@@ -119,23 +218,35 @@ document.addEventListener('DOMContentLoaded', async function() {
         updateVoortgang();
 
         // AI hulp beschikbaar maken
-        aiHelpKnop.disabled = false;
-        aiHelpBeschikbaar = true;
+        if (aiHelpKnop) {
+            aiHelpKnop.disabled = false;
+            aiHelpBeschikbaar = true;
+        }
     } catch (error) {
         console.error('Fout bij het ophalen van vragen:', error);
-        quizContent.innerHTML = '<div class="foutmelding">Er is een fout opgetreden bij het laden van de vragen. Probeer het later opnieuw.</div>';
+        quizContent.innerHTML = `<div class="foutmelding">
+            Er is een fout opgetreden bij het laden van de vragen: ${error.message}
+            <br><br>
+            <button onclick="window.location.reload()" class="retry-button">🔄 Opnieuw proberen</button>
+            <br><br>
+            <a href="../chooseExam/chooseExam.html" class="back-link">← Terug naar examenselectie</a>
+        </div>`;
     }
 
     // Event listener voor AI hulp knop
-    aiHelpKnop.addEventListener('click', function() {
-        if (!aiHelpBeschikbaar) return;
+    if (aiHelpKnop) {
+        aiHelpKnop.addEventListener('click', function() {
+            if (!aiHelpBeschikbaar) return;
 
-        const huidigeVraag = vragen[huidigeVraagIndex];
-        vraagAIOmHulp(huidigeVraag.vraagtekst);
-    });
+            const huidigeVraag = vragen[huidigeVraagIndex];
+            vraagAIOmHulp(huidigeVraag.vraagtekst);
+        });
+    }
 
     // Functie om AI hulp aan te vragen
     async function vraagAIOmHulp(vraagtekst) {
+        if (!aiHelpKnop) return;
+
         aiHelpKnop.disabled = true;
         aiHelpKnop.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="spinner">
@@ -152,11 +263,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             toonAIUitleg(aiUitleg, vraagtekst);
         } catch (error) {
             console.error('Fout bij AI hulp:', error);
-            aiUitlegContainer.innerHTML = `
-                <div class="foutmelding">
-                    Er is een fout opgetreden bij het ophalen van AI hulp: ${error.message}
-                </div>
-            `;
+            if (aiUitlegContainer) {
+                aiUitlegContainer.innerHTML = `
+                    <div class="foutmelding">
+                        Er is een fout opgetreden bij het ophalen van AI hulp: ${error.message}
+                    </div>
+                `;
+            }
         } finally {
             aiHelpKnop.disabled = false;
             aiHelpKnop.innerHTML = `
@@ -170,6 +283,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Functie om AI uitleg weer te geven
     function toonAIUitleg(aiUitleg, vraagtekst) {
+        if (!aiUitlegContainer) return;
+
         aiUitlegContainer.innerHTML = `
             <div class="ai-uitleg-container">
                 <div class="ai-uitleg-titel">
@@ -191,7 +306,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         let keuzesHTML = '';
         vraag.keuzes.forEach(keuze => {
-            const isGeselecteerd = antwoorden[vraag.id] === keuze.id ? 'geselecteerd' : '';
+            const isGeselecteerd = userAntwoorden[vraag.id] === keuze.id ? 'geselecteerd' : '';
             keuzesHTML += `
                 <div class="keuze ${isGeselecteerd}" data-keuze-id="${keuze.id}">
                     ${keuze.text}
@@ -210,13 +325,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         `;
 
         // Wis AI uitleg wanneer naar een nieuwe vraag gaat
-        aiUitlegContainer.innerHTML = '';
+        if (aiUitlegContainer) {
+            aiUitlegContainer.innerHTML = '';
+        }
 
         // Voeg event listeners toe aan keuzes
         document.querySelectorAll('.keuze').forEach(keuzeElement => {
             keuzeElement.addEventListener('click', function() {
                 const keuzeId = this.getAttribute('data-keuze-id');
-                antwoorden[vraag.id] = keuzeId;
+                userAntwoorden[vraag.id] = keuzeId;
 
                 // Update weergave van geselecteerde keuze
                 document.querySelectorAll('.keuze').forEach(k => {
@@ -230,48 +347,54 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
 
         // Update knoppen
-        vorigeKnop.style.display = index === 0 ? 'none' : 'block';
-        volgendeKnop.style.display = index === vragen.length - 1 ? 'none' : 'block';
-        indienenKnop.style.display = index === vragen.length - 1 ? 'block' : 'none';
+        if (vorigeKnop) vorigeKnop.style.display = index === 0 ? 'none' : 'block';
+        if (volgendeKnop) volgendeKnop.style.display = index === vragen.length - 1 ? 'none' : 'block';
+        if (indienenKnop) indienenKnop.style.display = index === vragen.length - 1 ? 'block' : 'none';
     }
 
     // Update de voortgangsbalk en score
     function updateVoortgang() {
-        const beantwoord = Object.values(antwoorden).filter(a => a !== null).length;
+        const beantwoord = Object.values(userAntwoorden).filter(a => a !== null).length;
         const percentage = (beantwoord / vragen.length) * 100;
-        voortgang.style.width = `${percentage}%`;
-        scoreElement.textContent = beantwoord;
+        if (voortgang) voortgang.style.width = `${percentage}%`;
+        if (scoreElement) scoreElement.textContent = beantwoord;
     }
 
     // Event listeners voor navigatieknoppen
-    vorigeKnop.addEventListener('click', function() {
-        if (huidigeVraagIndex > 0) {
-            huidigeVraagIndex--;
-            toonVraag(huidigeVraagIndex);
-        }
-    });
+    if (vorigeKnop) {
+        vorigeKnop.addEventListener('click', function() {
+            if (huidigeVraagIndex > 0) {
+                huidigeVraagIndex--;
+                toonVraag(huidigeVraagIndex);
+            }
+        });
+    }
 
-    volgendeKnop.addEventListener('click', function() {
-        if (antwoorden[vragen[huidigeVraagIndex].id] === null) {
-            alert('Selecteer een antwoord voordat je doorgaat.');
-            return;
-        }
+    if (volgendeKnop) {
+        volgendeKnop.addEventListener('click', function() {
+            if (userAntwoorden[vragen[huidigeVraagIndex].id] === null) {
+                alert('Selecteer een antwoord voordat je doorgaat.');
+                return;
+            }
 
-        if (huidigeVraagIndex < vragen.length - 1) {
-            huidigeVraagIndex++;
-            toonVraag(huidigeVraagIndex);
-        }
-    });
+            if (huidigeVraagIndex < vragen.length - 1) {
+                huidigeVraagIndex++;
+                toonVraag(huidigeVraagIndex);
+            }
+        });
+    }
 
-    indienenKnop.addEventListener('click', function() {
-        if (antwoorden[vragen[huidigeVraagIndex].id] === null) {
-            alert('Selecteer een antwoord voordat je de quiz indient.');
-            return;
-        }
+    if (indienenKnop) {
+        indienenKnop.addEventListener('click', function() {
+            if (userAntwoorden[vragen[huidigeVraagIndex].id] === null) {
+                alert('Selecteer een antwoord voordat je de quiz indient.');
+                return;
+            }
 
-        // Bereken score en toon resultaten
-        toonResultaten();
-    });
+            // Bereken score en toon resultaten
+            toonResultaten();
+        });
+    }
 
     // Toon de quizresultaten met leaderboard
     function toonResultaten() {
@@ -280,23 +403,21 @@ document.addEventListener('DOMContentLoaded', async function() {
         let samenvattingHTML = '';
 
         vragen.forEach((vraag, index) => {
-            const gegevenAntwoordId = antwoorden[vraag.id];
-            // Aanname: eerste keuze is altijd het juiste antwoord (pas dit aan naar jouw logica)
-            const juisteAntwoordId = vraag.keuzes[0].id;
-            const isCorrect = gegevenAntwoordId === juisteAntwoordId;
+            const gegevenAntwoordId = userAntwoorden[vraag.id];
+            const juisteAntwoord = vraag.keuzes.find(keuze => keuze.isCorrect);
+            const gegevenAntwoord = vraag.keuzes.find(k => k.id === gegevenAntwoordId);
+
+            const isCorrect = juisteAntwoord && gegevenAntwoordId === juisteAntwoord.id;
 
             if (isCorrect) score++;
-
-            const gegevenAntwoord = vraag.keuzes.find(k => k.id === gegevenAntwoordId)?.text || 'Niet beantwoord';
-            const juisteAntwoord = vraag.keuzes[0].text;
 
             samenvattingHTML += `
                 <div class="samenvatting-item">
                     <div class="samenvatting-vraag">Vraag ${index + 1}: ${vraag.vraagtekst}</div>
                     <div class="${isCorrect ? 'juist' : 'onjuist'}">
-                        Jouw antwoord: ${gegevenAntwoord} ${isCorrect ? '✓' : '✗'}
+                        Jouw antwoord: ${gegevenAntwoord ? gegevenAntwoord.text : 'Niet beantwoord'} ${isCorrect ? '✓' : '✗'}
                     </div>
-                    ${!isCorrect ? `<div class="juist">Juiste antwoord: ${juisteAntwoord}</div>` : ''}
+                    ${!isCorrect && juisteAntwoord ? `<div class="juist">Juiste antwoord: ${juisteAntwoord.text}</div>` : ''}
                 </div>
             `;
         });
@@ -309,59 +430,65 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Verberg quiz elementen
         quizContent.style.display = 'none';
-        document.querySelector('.nav-knoppen').style.display = 'none';
-        document.querySelector('.progress-container').style.display = 'none';
-        aiUitlegContainer.style.display = 'none';
-        aiHelpKnop.style.display = 'none';
-        document.querySelector('.ai-help-container').style.display = 'none';
+        const navKnoppen = document.querySelector('.nav-knoppen');
+        const progressContainer = document.querySelector('.progress-container');
+        const aiHelpContainer = document.querySelector('.ai-help-container');
+
+        if (navKnoppen) navKnoppen.style.display = 'none';
+        if (progressContainer) progressContainer.style.display = 'none';
+        if (aiUitlegContainer) aiUitlegContainer.style.display = 'none';
+        if (aiHelpKnop) aiHelpKnop.style.display = 'none';
+        if (aiHelpContainer) aiHelpContainer.style.display = 'none';
 
         // Toon resultaten met leaderboard
-        resultatenContainer.innerHTML = `
-            <div class="results-header">
-                <h2>🎉 Quiz Voltooid!</h2>
-                <div class="eindscore">
-                    <div class="score-display">
-                        <span class="score-number">${score}</span>
-                        <span class="score-divider">/</span>
-                        <span class="total-questions">${vragen.length}</span>
+        if (resultatenContainer) {
+            resultatenContainer.innerHTML = `
+                <div class="results-header">
+                    <h2>🎉 Quiz Voltooid!</h2>
+                    <div class="eindscore">
+                        <div class="score-display">
+                            <span class="score-number">${score}</span>
+                            <span class="score-divider">/</span>
+                            <span class="total-questions">${vragen.length}</span>
+                        </div>
+                        <div class="score-percentage">${Math.round((score / vragen.length) * 100)}%</div>
                     </div>
-                    <div class="score-percentage">${Math.round((score / vragen.length) * 100)}%</div>
+                    <div class="player-rank">Jouw positie: #${playerRank}</div>
+                    <div class="motivational-message">${motivationalMessage}</div>
                 </div>
-                <div class="player-rank">Jouw positie: #${playerRank}</div>
-                <div class="motivational-message">${motivationalMessage}</div>
-            </div>
-            
-            <div class="leaderboard-container">
-                <h3 class="leaderboard-title">🏆 Leaderboard</h3>
-                <ul class="leaderboard-list">
-                    ${leaderboardHTML}
-                </ul>
-            </div>
+                
+                <div class="leaderboard-container">
+                    <h3 class="leaderboard-title">🏆 Leaderboard</h3>
+                    <ul class="leaderboard-list">
+                        ${leaderboardHTML}
+                    </ul>
+                </div>
 
-            <div class="samenvatting">
-                <h3>📋 Gedetailleerde Resultaten:</h3>
-                ${samenvattingHTML}
-            </div>
+                <div class="samenvatting">
+                    <h3>📋 Gedetailleerde Resultaten:</h3>
+                    ${samenvattingHTML}
+                </div>
 
-            <div class="action-buttons">
-                <button class="opnieuw-knop" onclick="window.location.reload()">
-                    🔄 Quiz Opnieuw Spelen
-                </button>
-                <button class="deel-knop" onclick="deelScore(${score}, ${vragen.length})">
-                    📤 Deel je Score
-                </button>
-            </div>
-        `;
+                <div class="action-buttons">
+                    <button class="opnieuw-knop" onclick="window.location.reload()">
+                        🔄 Quiz Opnieuw Spelen
+                    </button>
+                    <button class="deel-knop" onclick="deelScore(${score}, ${vragen.length})">
+                        📤 Deel je Score
+                    </button>
+                </div>
+            `;
 
-        resultatenContainer.style.display = 'block';
+            resultatenContainer.style.display = 'block';
 
-        // Animatie voor score revealing
-        setTimeout(() => {
-            const scoreDisplay = document.querySelector('.score-display');
-            if (scoreDisplay) {
-                scoreDisplay.style.animation = 'scoreReveal 1s ease-out';
-            }
-        }, 300);
+            // Animatie voor score revealing
+            setTimeout(() => {
+                const scoreDisplay = document.querySelector('.score-display');
+                if (scoreDisplay) {
+                    scoreDisplay.style.animation = 'scoreReveal 1s ease-out';
+                }
+            }, 300);
+        }
     }
 
     // Functie om score te delen (placeholder)
