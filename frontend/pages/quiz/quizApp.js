@@ -29,19 +29,39 @@ async function getAntwoorden(examenId = null) {
     }
 }
 
-// Leaderboard data (simulatie van bot scores)
-const botScores = [
-    { naam: 'Lisa', score: 9 },
-    { naam: 'Thomas', score: 8 },
-    { naam: 'Sanne', score: 7 },
-    { naam: 'Mike', score: 6 },
-    { naam: 'Emma', score: 5 }
+// Bot scores in percentages (0-100) - generiek voor elk aantal vragen
+const botPercentages = [
+    { naam: 'Lisa', percentage: 90 },
+    { naam: 'Thomas', percentage: 80 },
+    { naam: 'Sanne', percentage: 70 },
+    { naam: 'Mike', percentage: 60 },
+    { naam: 'Emma', percentage: 50 }
 ];
 
+// Functie om bot scores om te zetten naar werkelijke scores op basis van aantal vragen
+function generateBotScores(totalQuestions) {
+    return botPercentages.map(bot => ({
+        naam: bot.naam,
+        score: Math.round((bot.percentage / 100) * totalQuestions),
+        percentage: bot.percentage
+    }));
+}
+
 // Functie om leaderboard te genereren
-function generateLeaderboard(playerScore, playerName = 'Jij') {
+function generateLeaderboard(playerScore, totalQuestions, playerName = 'Jij') {
+    // Genereer bot scores op basis van aantal vragen
+    const botScores = generateBotScores(totalQuestions);
+
+    // Bereken speler percentage
+    const playerPercentage = Math.round((playerScore / totalQuestions) * 100);
+
     // Voeg speler toe aan scores
-    const allScores = [...botScores, { naam: playerName, score: playerScore, isPlayer: true }];
+    const allScores = [...botScores, {
+        naam: playerName,
+        score: playerScore,
+        percentage: playerPercentage,
+        isPlayer: true
+    }];
 
     // Sorteer op score (hoogste eerst)
     allScores.sort((a, b) => b.score - a.score);
@@ -59,7 +79,7 @@ function generateLeaderboard(playerScore, playerName = 'Jij') {
 }
 
 // Functie om leaderboard HTML te genereren
-function createLeaderboardHTML(leaderboardData, maxEntries = 10) {
+function createLeaderboardHTML(leaderboardData, totalQuestions, maxEntries = 10) {
     let html = '';
 
     leaderboardData.slice(0, maxEntries).forEach(player => {
@@ -70,7 +90,7 @@ function createLeaderboardHTML(leaderboardData, maxEntries = 10) {
             <li class="leaderboard-item ${isPlayer} ${medalClass}">
                 <span class="leaderboard-rank">${player.rank}.</span>
                 <span class="leaderboard-name">${player.naam}</span>
-                <span class="leaderboard-score">${player.score}/10</span>
+                <span class="leaderboard-score">${player.score}/${totalQuestions} (${player.percentage}%)</span>
             </li>
         `;
     });
@@ -85,7 +105,7 @@ function getMotivationalMessage(score, totalQuestions, rank) {
     if (percentage >= 90) {
         return "Uitstekend! Je beheerst beroepsethiek echt goed! 🌟";
     } else if (percentage >= 80) {
-        return "Zeer goed gedaan! Je hebt een sterke basis in beroepsethiek! 👍";
+        return "Zeer goed gedaan! Je hebt een sterke basis in beroepsethiek! 👏";
     } else if (percentage >= 70) {
         return "Goed werk! Er is nog ruimte voor verbetering, maar je bent op de goede weg! 💪";
     } else if (percentage >= 60) {
@@ -422,11 +442,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             `;
         });
 
-        // Genereer leaderboard
-        const leaderboardData = generateLeaderboard(score);
+        // Genereer leaderboard met dynamische bot scores
+        const leaderboardData = generateLeaderboard(score, vragen.length);
         const playerRank = leaderboardData.find(p => p.isPlayer)?.rank || 'N/A';
         const motivationalMessage = getMotivationalMessage(score, vragen.length, playerRank);
-        const leaderboardHTML = createLeaderboardHTML(leaderboardData);
+        const leaderboardHTML = createLeaderboardHTML(leaderboardData, vragen.length);
 
         // Verberg quiz elementen
         quizContent.style.display = 'none';
