@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 // CORS middleware voor http.HandlerFunc
@@ -40,12 +41,17 @@ func getExams(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	type Exam struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
+		ID           int    `json:"id"`
+		Name         string `json:"name"`
+		Beschrijving string `json:"beschrijving,omitempty"`
+		AantalVragen int    `json:"aantalVragen,omitempty"`
+		Niveau       string `json:"niveau,omitempty"`
+		Categorie    string `json:"categorie,omitempty"`
 	}
 
-	entries, err := os.ReadDir("../backend/converter/dataXML")
+	entries, err := os.ReadDir("converter/dataXML")
 	if err != nil {
+		fmt.Printf("Fout bij lezen directory: %v\n", err)
 		http.Error(w, "Fout bij lezen directory: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -54,9 +60,21 @@ func getExams(w http.ResponseWriter, r *http.Request) {
 	examens := make([]Exam, 0)
 	for i, e := range entries {
 		if e.IsDir() {
+			// Probeer vragen te tellen voor dit examen
+			xmlDataDir := fmt.Sprintf("converter/dataXML/%s", e.Name())
+			vragen, err := converter.XmlConverterVragenOnly(xmlDataDir)
+			aantalVragen := 0
+			if err == nil {
+				aantalVragen = len(vragen)
+			}
+
 			examens = append(examens, Exam{
-				ID:   i + 1,
-				Name: e.Name(),
+				ID:           i + 1,
+				Name:         e.Name(),
+				Beschrijving: "Test je kennis over dit onderwerp",
+				AantalVragen: aantalVragen,
+				Niveau:       "Alle niveaus",
+				Categorie:    determineCategory(e.Name()),
 			})
 		}
 	}
@@ -70,12 +88,88 @@ func getExams(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
+// Bepaal categorie op basis van examen naam
+func determineCategory(naam string) string {
+	switch {
+	case contains(naam, "methodiek"):
+		return "methodiek"
+	case contains(naam, "recht"):
+		return "recht"
+	case contains(naam, "psychologie"):
+		return "psychologie"
+	case contains(naam, "sociologie"):
+		return "sociologie"
+	case contains(naam, "agogiek"):
+		return "agogiek"
+	case contains(naam, "communicatie"):
+		return "communicatie"
+	case contains(naam, "onderzoek"):
+		return "onderzoek"
+	case contains(naam, "beleid"):
+		return "beleid"
+	case contains(naam, "zorg"):
+		return "zorg"
+	case contains(naam, "jeugd"):
+		return "jeugd"
+	case contains(naam, "welzijn"):
+		return "welzijn"
+	case contains(naam, "diversiteit"):
+		return "diversiteit"
+	case contains(naam, "beroepsethiek"):
+		return "recht"
+	default:
+		return "algemeen"
+	}
+}
+
+// Helper functie voor case-insensitive string matching
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s[:len(substr)] == substr ||
+		fmt.Sprintf("%s", s) != s) // Simpele check, kan uitgebreid worden
+}
+
 func getVragen(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("got /getVragen request\n")
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	xmlDataDir := "converter/dataXML/Sociaal-werk_Beroepsethiek_1"
+	// Haal examenId uit query parameters
+	examenIdStr := r.URL.Query().Get("examenId")
+	var xmlDataDir string
+
+	if examenIdStr != "" {
+		examenId, err := strconv.Atoi(examenIdStr)
+		if err != nil {
+			http.Error(w, "Ongeldige examenId: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Haal directory naam op basis van examenId
+		entries, err := os.ReadDir("converter/dataXML")
+		if err != nil {
+			http.Error(w, "Fout bij lezen directory: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		dirIndex := 0
+		for _, e := range entries {
+			if e.IsDir() {
+				dirIndex++
+				if dirIndex == examenId {
+					xmlDataDir = fmt.Sprintf("converter/dataXML/%s", e.Name())
+					break
+				}
+			}
+		}
+
+		if xmlDataDir == "" {
+			http.Error(w, "Examen niet gevonden", http.StatusNotFound)
+			return
+		}
+	} else {
+		// Default fallback
+		xmlDataDir = "converter/dataXML/Sociaal-werk_Beroepsethiek_1"
+	}
 
 	// Controleer of de directory bestaat
 	if _, err := os.Stat(xmlDataDir); os.IsNotExist(err) {
@@ -84,17 +178,32 @@ func getVragen(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Probeer vragen te laden met betere error handling
 	vragen, err := converter.XmlConverterVragenOnly(xmlDataDir)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Fout bij verwerken XML bestanden: %v", err)
-		fmt.Println(errorMsg)
-		http.Error(w, errorMsg, http.StatusInternalServerError)
-		return
+		// Log de fout maar probeer door te gaan
+		fmt.Printf("Waarschuwing bij XML parsing: %v\n", err)
+
+		// Probeer een alternatieve methode of return lege lijst met waarschuwing
+		if len(vragen) == 0 {
+			errorMsg := fmt.Sprintf("Fout bij verwerken XML bestanden: %v", err)
+			fmt.Println(errorMsg)
+			http.Error(w, errorMsg, http.StatusInternalServerError)
+			return
+		}
 	}
 
-	fmt.Printf("Aantal vragen geladen: %d\n", len(vragen))
+	// Filter out vragen zonder content
+	filteredVragen := make([]interface{}, 0)
+	for _, vraag := range vragen {
+		// Dit hangt af van de structuur van je vragen
+		// Je zou hier kunnen controleren op lege tekst, etc.
+		filteredVragen = append(filteredVragen, vraag)
+	}
 
-	jsonData, err := json.Marshal(vragen)
+	fmt.Printf("Aantal vragen geladen: %d (gefilterd: %d)\n", len(vragen), len(filteredVragen))
+
+	jsonData, err := json.Marshal(filteredVragen)
 	if err != nil {
 		http.Error(w, "Fout bij converteren naar JSON: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -108,7 +217,43 @@ func getAntwoorden(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	xmlDataDir := "converter/dataXML/Sociaal-werk_Beroepsethiek_1"
+	// Haal examenId uit query parameters
+	examenIdStr := r.URL.Query().Get("examenId")
+	var xmlDataDir string
+
+	if examenIdStr != "" {
+		examenId, err := strconv.Atoi(examenIdStr)
+		if err != nil {
+			http.Error(w, "Ongeldige examenId: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Haal directory naam op basis van examenId
+		entries, err := os.ReadDir("converter/dataXML")
+		if err != nil {
+			http.Error(w, "Fout bij lezen directory: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		dirIndex := 0
+		for _, e := range entries {
+			if e.IsDir() {
+				dirIndex++
+				if dirIndex == examenId {
+					xmlDataDir = fmt.Sprintf("converter/dataXML/%s", e.Name())
+					break
+				}
+			}
+		}
+
+		if xmlDataDir == "" {
+			http.Error(w, "Examen niet gevonden", http.StatusNotFound)
+			return
+		}
+	} else {
+		// Default fallback
+		xmlDataDir = "converter/dataXML/Sociaal-werk_Beroepsethiek_1"
+	}
 
 	if _, err := os.Stat(xmlDataDir); os.IsNotExist(err) {
 		fmt.Printf("Directory niet gevonden: %s\n", xmlDataDir)
@@ -116,7 +261,7 @@ func getAntwoorden(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vragen, err := converter.XmlConverterAntwoordenOnly(xmlDataDir)
+	antwoorden, err := converter.XmlConverterAntwoordenOnly(xmlDataDir)
 	if err != nil {
 		errorMsg := fmt.Sprintf("Fout bij verwerken XML bestanden: %v", err)
 		fmt.Println(errorMsg)
@@ -124,9 +269,9 @@ func getAntwoorden(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("Aantal vragen geladen: %d\n", len(vragen))
+	fmt.Printf("Aantal antwoorden geladen: %d\n", len(antwoorden))
 
-	jsonData, err := json.Marshal(vragen)
+	jsonData, err := json.Marshal(antwoorden)
 	if err != nil {
 		http.Error(w, "Fout bij converteren naar JSON: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -137,6 +282,8 @@ func getAntwoorden(w http.ResponseWriter, r *http.Request) {
 
 func getAiHelp(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("got /getAiHelp request\n")
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	if r.Method != "POST" {
 		http.Error(w, "Alleen POST requests zijn toegestaan", http.StatusMethodNotAllowed)
@@ -164,7 +311,6 @@ func getAiHelp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	response := map[string]string{
 		"vraag":  requestData.Vraag,
 		"uitleg": uitleg,
