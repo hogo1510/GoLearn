@@ -16,22 +16,31 @@ async function apiAanroep(endpoint) {
     }
 }
 
-async function getvragen() {
+async function getvragen(examenId = null) {
     try {
-        const data = await apiAanroep('/getVragen');
+        let endpoint = '/getVragen';
+        if (examenId) {
+            endpoint += `?examenId=${examenId}`;
+        }
+        const data = await apiAanroep(endpoint);
         return data;
     } catch (error) {
         console.error('Fout bij ophalen vragen:', error);
         throw error;
     }
 }
-async function getAntwoorden() {
+
+async function getAntwoorden(examenId = null) {
     try {
-        const data = await apiAanroep('/getAntwoorden');
-        return data; // RETURN de data
+        let endpoint = '/getAntwoorden';
+        if (examenId) {
+            endpoint += `?examenId=${examenId}`;
+        }
+        const data = await apiAanroep(endpoint);
+        return data;
     } catch (error) {
         console.error('Fout bij ophalen antwoorden:', error);
-        throw error; // Gooi de error opnieuw
+        throw error;
     }
 }
 
@@ -60,15 +69,23 @@ async function getAIHelp(vraag) {
         }
 
         const data = await response.json();
-        toonAIUitleg(data.uitleg, vraag);
+
+        // Check if we're in the chooseExam context or quiz context
+        if (typeof toonAIUitleg === 'function') {
+            toonAIUitleg(data.uitleg, vraag);
+        }
+
         return data;
     } catch (error) {
         console.error('Fout bij AI-aanroep:', error);
-        toonFout('Kon geen AI-uitleg krijgen: ' + error.message);
+        if (typeof toonFout === 'function') {
+            toonFout('Kon geen AI-uitleg krijgen: ' + error.message);
+        }
         throw error;
     }
 }
 
+// Maak functies globaal beschikbaar
 window.getvragen = getvragen;
 window.getExams = getExams;
 window.getAntwoorden = getAntwoorden;

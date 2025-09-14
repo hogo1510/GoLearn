@@ -1,12 +1,99 @@
+// Functie om URL parameters te lezen
+function getURLParameter(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+}
+
 // API functie die gebruik maakt van de bestaande getvragen() functie
-async function getVragen() {
+async function getVragen(examenId = null) {
     try {
         // Roep de bestaande getvragen() functie aan vanuit client.js
-        const response = await window.getvragen();
+        const response = await window.getvragen(examenId);
+        console.log('Raw response from server:', response);
         return response;
     } catch (error) {
         console.error('Fout bij het ophalen van vragen:', error);
         throw new Error('Kon vragen niet ophalen');
+    }
+}
+
+// API functie om antwoorden op te halen
+async function getAntwoorden(examenId = null) {
+    try {
+        const response = await window.getAntwoorden(examenId);
+        console.log('Raw antwoorden from server:', response);
+        return response;
+    } catch (error) {
+        console.error('Fout bij het ophalen van antwoorden:', error);
+        throw new Error('Kon antwoorden niet ophalen');
+    }
+}
+
+// Leaderboard data (simulatie van bot scores)
+const botScores = [
+    { naam: 'Lisa', score: 9 },
+    { naam: 'Thomas', score: 8 },
+    { naam: 'Sanne', score: 7 },
+    { naam: 'Mike', score: 6 },
+    { naam: 'Emma', score: 5 }
+];
+
+// Functie om leaderboard te genereren
+function generateLeaderboard(playerScore, playerName = 'Jij') {
+    // Voeg speler toe aan scores
+    const allScores = [...botScores, { naam: playerName, score: playerScore, isPlayer: true }];
+
+    // Sorteer op score (hoogste eerst)
+    allScores.sort((a, b) => b.score - a.score);
+
+    // Voeg ranking toe
+    let currentRank = 1;
+    allScores.forEach((player, index) => {
+        if (index > 0 && allScores[index - 1].score > player.score) {
+            currentRank = index + 1;
+        }
+        player.rank = currentRank;
+    });
+
+    return allScores;
+}
+
+// Functie om leaderboard HTML te genereren
+function createLeaderboardHTML(leaderboardData, maxEntries = 10) {
+    let html = '';
+
+    leaderboardData.slice(0, maxEntries).forEach(player => {
+        const isPlayer = player.isPlayer ? 'current-player' : '';
+        const medalClass = player.rank <= 3 ? `medal-${player.rank}` : '';
+
+        html += `
+            <li class="leaderboard-item ${isPlayer} ${medalClass}">
+                <span class="leaderboard-rank">${player.rank}.</span>
+                <span class="leaderboard-name">${player.naam}</span>
+                <span class="leaderboard-score">${player.score}/10</span>
+            </li>
+        `;
+    });
+
+    return html;
+}
+
+// Functie om een motiverende boodschap te genereren
+function getMotivationalMessage(score, totalQuestions, rank) {
+    const percentage = (score / totalQuestions) * 100;
+
+    if (percentage >= 90) {
+        return "Uitstekend! Je beheerst beroepsethiek echt goed! 🌟";
+    } else if (percentage >= 80) {
+        return "Zeer goed gedaan! Je hebt een sterke basis in beroepsethiek! 👍";
+    } else if (percentage >= 70) {
+        return "Goed werk! Er is nog ruimte voor verbetering, maar je bent op de goede weg! 💪";
+    } else if (percentage >= 60) {
+        return "Niet slecht! Met wat meer studie kun je je score zeker verbeteren! 📚";
+    } else if (percentage >= 50) {
+        return "Je hebt de basis onder de knie! Blijf oefenen om je kennis te verdiepen! 🎯";
+    } else {
+        return "Geen zorgen, iedereen begint ergens! Neem de tijd om de stof nog eens door te nemen! 🚀";
     }
 }
 
@@ -22,26 +109,106 @@ document.addEventListener('DOMContentLoaded', async function() {
     const aiUitlegContainer = document.getElementById('ai-uitleg');
 
     let vragen = [];
+    let antwoorden = [];
     let huidigeVraagIndex = 0;
-    let antwoorden = {};
+    let userAntwoorden = {};
     let score = 0;
     let aiHelpBeschikbaar = false;
+    let examenId = null;
+    let examenNaam = 'Beroepsethiek Quiz';
+
+    // Check voor examen ID in URL parameters
+    examenId = getURLParameter('examenId');
+    const examenNaamParam = getURLParameter('examenNaam');
+
+    if (examenNaamParam) {
+        examenNaam = decodeURIComponent(examenNaamParam);
+        document.querySelector('h1').textContent = examenNaam;
+        document.querySelector('.description').textContent = `Test je kennis over ${examenNaam.toLowerCase()}`;
+    }
 
     // Toon laadstatus
     quizContent.innerHTML = '<div class="loading">Vragen laden...</div>';
 
     try {
-        // Vragen ophalen van de API
-        vragen = await getVragen();
+        // Vragen ophalen van de API met examen ID
+        console.log('Ophalen vragen voor examenId:', examenId);
+        vragen = await getVragen(examenId);
+        console.log('Vragen geladen:', vragen);
 
-        // Verwijder lege antwoordopties
-        vragen.forEach(vraag => {
-            vraag.keuzes = vraag.keuzes.filter(keuze => keuze.text.trim() !== '');
+        if (!vragen || vragen.length === 0) {
+            throw new Error('Geen vragen gevonden voor dit examen');
+        }
+
+        // Probeer antwoorden op te halen, maar faal niet als het niet lukt
+        try {
+            antwoorden = await getAntwoorden(examenId);
+            console.log('Antwoorden geladen:', antwoorden);
+        } catch (antwoordenError) {
+            console.warn('Kon antwoorden niet laden, gebruik vragen structuur:', antwoordenError);
+            antwoorden = [];
+        }
+
+        // Combineer vragen met hun antwoorden
+        vragen = vragen.map(vraag => {
+            let keuzes = [];
+
+            if (antwoorden && antwoorden.length > 0) {
+                // Vind antwoorden die bij deze vraag horen
+                const vraagAntwoorden = antwoorden.filter(antwoord =>
+                    antwoord.vraagID === vraag.id || antwoord.questionId === vraag.id
+                );
+
+                keuzes = vraagAntwoorden.map((antwoord, index) => ({
+                    id: antwoord.id || `${vraag.id}_${index}`,
+                    text: antwoord.text || antwoord.antwoord || 'Geen antwoord',
+                    isCorrect: antwoord.isCorrect || antwoord.correct || false
+                }));
+            } else {
+                // Fallback: gebruik de antwoorden die mogelijk al in de vraag zitten
+                if (vraag.keuzes && Array.isArray(vraag.keuzes)) {
+                    keuzes = vraag.keuzes.map((keuze, index) => ({
+                        id: keuze.id || `${vraag.id}_${index}`,
+                        text: keuze.text || keuze.antwoord || `Optie ${index + 1}`,
+                        isCorrect: keuze.isCorrect || keuze.correct || index === 0 // Eerste optie als default correct
+                    }));
+                } else if (vraag.choices && Array.isArray(vraag.choices)) {
+                    keuzes = vraag.choices.map((choice, index) => ({
+                        id: choice.id || `${vraag.id}_${index}`,
+                        text: choice.text || choice.answer || `Optie ${index + 1}`,
+                        isCorrect: choice.isCorrect || choice.correct || index === 0
+                    }));
+                } else {
+                    // Laatste fallback: maak dummy antwoorden
+                    keuzes = [
+                        { id: `${vraag.id}_0`, text: 'Optie A', isCorrect: true },
+                        { id: `${vraag.id}_1`, text: 'Optie B', isCorrect: false },
+                        { id: `${vraag.id}_2`, text: 'Optie C', isCorrect: false },
+                        { id: `${vraag.id}_3`, text: 'Optie D', isCorrect: false }
+                    ];
+                }
+            }
+
+            // Converteer naar het verwachte formaat
+            return {
+                id: vraag.id,
+                vraagtekst: vraag.text || vraag.vraagtekst || vraag.question || 'Geen vraagtekst',
+                keuzes: keuzes
+            };
         });
 
-        // Initialiseer antwoorden object
+        // Filter vragen zonder geldige antwoorden
+        vragen = vragen.filter(vraag => vraag.keuzes && vraag.keuzes.length > 0);
+
+        console.log('Verwerkte vragen:', vragen);
+
+        if (vragen.length === 0) {
+            throw new Error('Geen vragen met geldige antwoorden gevonden');
+        }
+
+        // Initialiseer user antwoorden object
         vragen.forEach(vraag => {
-            antwoorden[vraag.id] = null;
+            userAntwoorden[vraag.id] = null;
         });
 
         // Toon de eerste vraag
@@ -51,30 +218,42 @@ document.addEventListener('DOMContentLoaded', async function() {
         updateVoortgang();
 
         // AI hulp beschikbaar maken
-        aiHelpKnop.disabled = false;
-        aiHelpBeschikbaar = true;
+        if (aiHelpKnop) {
+            aiHelpKnop.disabled = false;
+            aiHelpBeschikbaar = true;
+        }
     } catch (error) {
         console.error('Fout bij het ophalen van vragen:', error);
-        quizContent.innerHTML = '<div class="foutmelding">Er is een fout opgetreden bij het laden van de vragen. Probeer het later opnieuw.</div>';
+        quizContent.innerHTML = `<div class="foutmelding">
+            Er is een fout opgetreden bij het laden van de vragen: ${error.message}
+            <br><br>
+            <button onclick="window.location.reload()" class="retry-button">🔄 Opnieuw proberen</button>
+            <br><br>
+            <a href="../chooseExam/chooseExam.html" class="back-link">← Terug naar examenselectie</a>
+        </div>`;
     }
 
     // Event listener voor AI hulp knop
-    aiHelpKnop.addEventListener('click', function() {
-        if (!aiHelpBeschikbaar) return;
+    if (aiHelpKnop) {
+        aiHelpKnop.addEventListener('click', function() {
+            if (!aiHelpBeschikbaar) return;
 
-        const huidigeVraag = vragen[huidigeVraagIndex];
-        vraagAIOmHulp(huidigeVraag.vraagtekst);
-    });
+            const huidigeVraag = vragen[huidigeVraagIndex];
+            vraagAIOmHulp(huidigeVraag.vraagtekst);
+        });
+    }
 
     // Functie om AI hulp aan te vragen
     async function vraagAIOmHulp(vraagtekst) {
+        if (!aiHelpKnop) return;
+
         aiHelpKnop.disabled = true;
         aiHelpKnop.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="spinner">
-                        <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM7 5.5C7 4.672 6.328 4 5.5 4S4 4.672 4 5.5 4.672 7 5.5 7 7 6.328 7 5.5zM5 11h1V8H5v3zm4.5-1.5c.653 0 1.272-.139 1.833-.389l.238.389H13V8.5h-1v.722l-.45-.166c-.326-.12-.674-.166-1.05-.166C9.672 8.89 9 9.562 9 10.5c0 .688.525 1.219 1.25 1.219.443 0 .834-.172 1.166-.453.12.327.334.583.584.833.5.5 1.166.75 2 .75h1v-1h-1c-.446 0-.833-.167-1.167-.5-.333-.333-.5-.72-.5-1.167 0-.448.167-.834.5-1.167.334-.333.721-.5 1.167-.5.446 0 .833.167 1.167.5.333.333.5.72.5 1.167h1c0-.833-.292-1.542-.875-2.125-.583-.583-1.292-.875-2.125-.875-.833 0-1.542.292-2.125.875-.583.583-.875 1.292-.875 2.125 0 .833.292 1.542.875 2.125.583.583 1.292.875 2.125.875h1v1h-1c-1.1 0-2.042-.392-2.825-1.175C8.392 12.042 8 11.1 8 10.5c0-1.1.392-2.042 1.175-2.825C9.958 6.892 10.9 6.5 12 6.5v1c-.75 0-1.396.26-1.938.781-.542.522-.812 1.167-.812 1.938 0 .77.27 1.416.812 1.938.542.521 1.188.781 1.938.781h1v1h-1c-1.25 0-2.313-.438-3.188-1.313C8.438 12.813 8 11.75 8 10.5c0-1.25.438-2.313 1.313-3.188C10.188 6.438 11.25 6 12.5 6v1c-1 0-1.854.354-2.562 1.063C9.229 8.77 8.875 9.624 8.875 10.625h1.25c0-.5.177-.927.531-1.281.354-.354.781-.531 1.281-.531.5 0 .927.177 1.281.531.354.354.531.781.531 1.281 0 .5-.177.927-.531 1.281-.354.354-.781.531-1.281.531h-1v1h1c.75 0 1.385-.26 1.906-.781.521-.522.781-1.156.781-1.906 0-.75-.26-1.385-.781-1.906-.521-.521-1.156-.781-1.906-.781-1.4 0-2.6.5-3.6 1.5-.5.5-.9 1.1-1.2 1.8-.1.3-.2.6-.2.9 0 .3.1.6.2.9.3.7.7 1.3 1.2 1.8.5.5 1.1.9 1.8 1.2.3.1.6.2.9.2h1v1h-1c-1.1 0-2.1-.4-2.9-1.1-.8-.7-1.3-1.6-1.6-2.6-.1-.4-.2-.8-.2-1.3 0-.5.1-.9.2-1.3.3-1 .8-1.9 1.6-2.6.8-.7 1.7-1.1 2.9-1.1 1.2 0 2.2.4 3 1.2.8.8 1.2 1.8 1.2 3 0 .4-.1.8-.2 1.2-.1.4-.3.8-.5 1.1-.2.3-.5.6-.8.8-.3.2-.7.4-1.1.5-.4.1-.8.2-1.2.2-.4 0-.8-.1-1.2-.2-.4-.1-.8-.3-1.1-.5-.3-.2-.6-.5-.8-.8-.2-.3-.4-.7-.5-1.1-.1-.4-.2-.8-.2-1.2h1c0 .3.1.6.2.9.1.3.3.6.5.8.2.2.5.4.8.5.3.1.6.2.9.2.3 0 .6-.1.9-.2.3-.1.6-.3.8-.5.2-.2.4-.5.5-.8.1-.3.2-.6.2-.9 0-.3-.1-.6-.2-.9-.1-.3-.3-.6-.5-.8-.2-.2-.5-.4-.8-.5-.3-.1-.6-.2-.9-.2-.3 0-.6.1-.9.2-.3.1-.6.3-.8.5-.2.2-.4.5-.5.8-.1.3-.2.6-.2.9z"/>
-                    </svg>
-                    Bezig...
-                `;
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="spinner">
+                <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM7 5.5C7 4.672 6.328 4 5.5 4S4 4.672 4 5.5 4.672 7 5.5 7 7 6.328 7 5.5zM5 11h1V8H5v3z"/>
+            </svg>
+            Bezig...
+        `;
 
         try {
             // Roep de AI help functie aan
@@ -84,169 +263,252 @@ document.addEventListener('DOMContentLoaded', async function() {
             toonAIUitleg(aiUitleg, vraagtekst);
         } catch (error) {
             console.error('Fout bij AI hulp:', error);
-            aiUitlegContainer.innerHTML = `
-                        <div class="foutmelding">
-                            Er is een fout opgetreden bij het ophalen van AI hulp: ${error.message}
-                        </div>
-                    `;
+            if (aiUitlegContainer) {
+                aiUitlegContainer.innerHTML = `
+                    <div class="foutmelding">
+                        Er is een fout opgetreden bij het ophalen van AI hulp: ${error.message}
+                    </div>
+                `;
+            }
         } finally {
             aiHelpKnop.disabled = false;
             aiHelpKnop.innerHTML = `
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM7 5.5C7 4.672 6.328 4 5.5 4S4 4.672 4 5.5 4.672 7 5.5 7 7 6.328 7 5.5zM5 11h1V8H5v3zm4.5-1.5c.653 0 1.272-.139 1.833-.389l.238.389H13V8.5h-1v.722l-.45-.166c-.326-.12-.674-.166-1.05-.166C9.672 8.89 9 9.562 9 10.5c0 .688.525 1.219 1.25 1.219.443 0 .834-.172 1.166-.453.12.327.334.583.584.833.5.5 1.166.75 2 .75h1v-1h-1c-.446 0-.833-.167-1.167-.5-.333-.333-.5-.72-.5-1.167 0-.448.167-.834.5-1.167.334-.333.721-.5 1.167-.5.446 0 .833.167 1.167.5.333.333.5.72.5 1.167h1c0-.833-.292-1.542-.875-2.125-.583-.583-1.292-.875-2.125-.875-.833 0-1.542.292-2.125.875-.583.583-.875 1.292-.875 2.125 0 .833.292 1.542.875 2.125.583.583 1.292.875 2.125.875h1v1h-1c-1.1 0-2.042-.392-2.825-1.175C8.392 12.042 8 11.1 8 10.5c0-1.1.392-2.042 1.175-2.825C9.958 6.892 10.9 6.5 12 6.5v1c-.75 0-1.396.26-1.938.781-.542.522-.812 1.167-.812 1.938 0 .77.27 1.416.812 1.938.542.521 1.188.781 1.938.781h1v1h-1c-1.25 0-2.313-.438-3.188-1.313C8.438 12.813 8 11.75 8 10.5c0-1.25.438-2.313 1.313-3.188C10.188 6.438 11.25 6 12.5 6v1c-1 0-1.854.354-2.562 1.063C9.229 8.77 8.875 9.624 8.875 10.625h1.25c0-.5.177-.927.531-1.281.354-.354.781-.531 1.281-.531.5 0 .927.177 1.281.531.354.354.531.781.531 1.281 0 .5-.177.927-.531 1.281-.354.354-.781.531-1.281.531h-1v1h1c.75 0 1.385-.26 1.906-.781.521-.522.781-1.156.781-1.906 0-.75-.26-1.385-.781-1.906-.521-.521-1.156-.781-1.906-.781-1.4 0-2.6.5-3.6 1.5-.5.5-.9 1.1-1.2 1.8-.1.3-.2.6-.2.9 0 .3.1.6.2.9.3.7.7 1.3 1.2 1.8.5.5 1.1.9 1.8 1.2.3.1.6.2.9.2h1v1h-1c-1.1 0-2.1-.4-2.9-1.1-.8-.7-1.3-1.6-1.6-2.6-.1-.4-.2-.8-.2-1.3 0-.5.1-.9.2-1.3.3-1 .8-1.9 1.6-2.6.8-.7 1.7-1.1 2.9-1.1 1.2 0 2.2.4 3 1.2.8.8 1.2 1.8 1.2 3 0 .4-.1.8-.2 1.2-.1.4-.3.8-.5 1.1-.2.3-.5.6-.8.8-.3.2-.7.4-1.1.5-.4.1-.8.2-1.2.2-.4 0-.8-.1-1.2-.2-.4-.1-.8-.3-1.1-.5-.3-.2-.6-.5-.8-.8-.2-.3-.4-.7-.5-1.1-.1-.4-.2-.8-.2-1.2h1c0 .3.1.6.2.9.1.3.3.6.5.8.2.2.5.4.8.5.3.1.6.2.9.2.3 0 .6-.1.9-.2.3-.1.6-.3.8-.5.2-.2.4-.5.5-.8.1-.3.2-.6.2-.9 0-.3-.1-.6-.2-.9-.1-.3-.3-.6-.5-.8-.2-.2-.5-.4-.8-.5-.3-.1-.6-.2-.9-.2-.3 0-.6.1-.9.2-.3.1-.6.3-.8.5-.2.2-.4.5-.5.8-.1.3-.2.6-.2.9z"/>
-                        </svg>
-                        AI Hulp
-                    `;
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM7 5.5C7 4.672 6.328 4 5.5 4S4 4.672 4 5.5 4.672 7 5.5 7 7 6.328 7 5.5zM5 11h1V8H5v3z"/>
+                </svg>
+                AI Hulp
+            `;
         }
     }
 
     // Functie om AI uitleg weer te geven
     function toonAIUitleg(aiUitleg, vraagtekst) {
+        if (!aiUitlegContainer) return;
+
         aiUitlegContainer.innerHTML = `
-                    <div class="ai-uitleg-container">
-                        <div class="ai-uitleg-titel">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM7 5.5C7 4.672 6.328 4 5.5 4S4 4.672 4 5.5 4.672 7 5.5 7 7 6.328 7 5.5zM5 11h1V8H5v3zm4.5-1.5c.653 0 1.272-.139 1.833-.389l.238.389H13V8.5h-1v.722l-.45-.166c-.326-.12-.674-.166-1.05-.166C9.672 8.89 9 9.562 9 10.5c0 .688.525 1.219 1.25 1.219.443 0 .834-.172 1.166-.453.12.327.334.583.584.833.5.5 1.166.75 2 .75h1v-1h-1c-.446 0-.833-.167-1.167-.5-.333-.333-.5-.72-.5-1.167 0-.448.167-.834.5-1.167.334-.333.721-.5 1.167-.5.446 0 .833.167 1.167.5.333.333.5.72.5 1.167h1c0-.833-.292-1.542-.875-2.125-.583-.583-1.292-.875-2.125-.875-.833 0-1.542.292-2.125.875-.583.583-.875 1.292-.875 2.125 0 .833.292 1.542.875 2.125.583.583 1.292.875 2.125.875h1v1h-1c-1.1 0-2.042-.392-2.825-1.175C8.392 12.042 8 11.1 8 10.5c0-1.1.392-2.042 1.175-2.825C9.958 6.892 10.9 6.5 12 6.5v1c-.75 0-1.396.26-1.938.781-.542.522-.812 1.167-.812 1.938 0 .77.27 1.416.812 1.938.542.521 1.188.781 1.938.781h1v1h-1c-1.25 0-2.313-.438-3.188-1.313C8.438 12.813 8 11.75 8 10.5c0-1.25.438-2.313 1.313-3.188C10.188 6.438 11.25 6 12.5 6v1c-1 0-1.854.354-2.562 1.063C9.229 8.77 8.875 9.624 8.875 10.625h1.25c0-.5.177-.927.531-1.281.354-.354.781-.531 1.281-.531.5 0 .927.177 1.281.531.354.354.531.781.531 1.281 0 .5-.177.927-.531 1.281-.354.354-.781.531-1.281.531h-1v1h1c.75 0 1.385-.26 1.906-.781.521-.522.781-1.156.781-1.906 0-.75-.26-1.385-.781-1.906-.521-.521-1.156-.781-1.906-.781-1.4 0-2.6.5-3.6 1.5-.5.5-.9 1.1-1.2 1.8-.1.3-.2.6-.2.9 0 .3.1.6.2.9.3.7.7 1.3 1.2 1.8.5.5 1.1.9 1.8 1.2.3.1.6.2.9.2h1v1h-1c-1.1 0-2.1-.4-2.9-1.1-.8-.7-1.3-1.6-1.6-2.6-.1-.4-.2-.8-.2-1.3 0-.5.1-.9.2-1.3.3-1 .8-1.9 1.6-2.6.8-.7 1.7-1.1 2.9-1.1 1.2 0 2.2.4 3 1.2.8.8 1.2 1.8 1.2 3 0 .4-.1.8-.2 1.2-.1.4-.3.8-.5 1.1-.2.3-.5.6-.8.8-.3.2-.7.4-1.1.5-.4.1-.8.2-1.2.2-.4 0-.8-.1-1.2-.2-.4-.1-.8-.3-1.1-.5-.3-.2-.6-.5-.8-.8-.2-.3-.4-.7-.5-1.1-.1-.4-.2-.8-.2-1.2h1c0 .3.1.6.2.9.1.3.3.6.5.8.2.2.极速5.4.8.5.3.1.6.2.9.2.3 0 .6-.1.9-.2.3-.1.6-.3.8-.5.2-.2.4-.5.极速5-.8.1-.3.2-.6.2-.9 0-.3-.1-.6-.2-.9-.1-.3-.3-.6-.5-.8-.2-.2-.5-.4-.8-.5-.3-.1-.6-.2-.9-.2-.3 0-.6.1-.9.2-.3.1-.6.3-.8.5-.2.2-.4.5-.5.8-.1.3-.2.6-.2.9z"/>
-                            </svg>
-                            AI Uitleg bij de vraag
-                        </div>
-                        <div class="ai-uitleg">
-                            ${aiUitleg.uitleg || aiUitleg}
-                        </div>
-                    </div>
-                `;
+            <div class="ai-uitleg-container">
+                <div class="ai-uitleg-titel">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM7 5.5C7 4.672 6.328 4 5.5 4S4 4.672 4 5.5 4.672 7 5.5 7 7 6.328 7 5.5zM5 11h1V8H5v3z"/>
+                    </svg>
+                    AI Uitleg bij de vraag
+                </div>
+                <div class="ai-uitleg">
+                    ${aiUitleg.uitleg || aiUitleg}
+                </div>
+            </div>
+        `;
     }
 
-    // [De rest van de functies blijft hetzelfde]
     // Toon de huidige vraag
     function toonVraag(index) {
         const vraag = vragen[index];
 
         let keuzesHTML = '';
         vraag.keuzes.forEach(keuze => {
-            const isGeselecteerd = antwoorden[vraag.id] === keuze.id ? 'geselecteerd' : '';
+            const isGeselecteerd = userAntwoorden[vraag.id] === keuze.id ? 'geselecteerd' : '';
             keuzesHTML += `
-                        <div class="keuze ${isGeselecteerd}" data-keuze-id="${keuze.id}">
-                            ${keuze.text}
-                        </div>
-                    `;
+                <div class="keuze ${isGeselecteerd}" data-keuze-id="${keuze.id}">
+                    ${keuze.text}
+                </div>
+            `;
         });
 
         quizContent.innerHTML = `
-                    <div class="vraag-container">
-                        <div class="vraag-nummer">Vraag ${index + 1} van ${vragen.length}</div>
-                        <div class="vraagtekst">${vraag.vraagtekst}</div>
-                        <div class="keuzes-container">
-                            ${keuzesHTML}
-                        </div>
-                    </div>
-                `;
+            <div class="vraag-container">
+                <div class="vraag-nummer">Vraag ${index + 1} van ${vragen.length}</div>
+                <div class="vraagtekst">${vraag.vraagtekst}</div>
+                <div class="keuzes-container">
+                    ${keuzesHTML}
+                </div>
+            </div>
+        `;
 
         // Wis AI uitleg wanneer naar een nieuwe vraag gaat
-        aiUitlegContainer.innerHTML = '';
+        if (aiUitlegContainer) {
+            aiUitlegContainer.innerHTML = '';
+        }
 
         // Voeg event listeners toe aan keuzes
         document.querySelectorAll('.keuze').forEach(keuzeElement => {
             keuzeElement.addEventListener('click', function() {
                 const keuzeId = this.getAttribute('data-keuze-id');
-                antwoorden[vraag.id] = keuzeId;
+                userAntwoorden[vraag.id] = keuzeId;
 
                 // Update weergave van geselecteerde keuze
                 document.querySelectorAll('.keuze').forEach(k => {
                     k.classList.remove('geselecteerd');
                 });
                 this.classList.add('geselecteerd');
+
+                // Update score display
+                updateVoortgang();
             });
         });
 
         // Update knoppen
-        vorigeKnop.style.display = index === 0 ? 'none' : 'block';
-        volgendeKnop.style.display = index === vragen.length - 1 ? 'none' : 'block';
-        indienenKnop.style.display = index === vragen.length - 1 ? 'block' : 'none';
+        if (vorigeKnop) vorigeKnop.style.display = index === 0 ? 'none' : 'block';
+        if (volgendeKnop) volgendeKnop.style.display = index === vragen.length - 1 ? 'none' : 'block';
+        if (indienenKnop) indienenKnop.style.display = index === vragen.length - 1 ? 'block' : 'none';
     }
 
-    // Update de voortgangsbalk
+    // Update de voortgangsbalk en score
     function updateVoortgang() {
-        const beantwoord = Object.values(antwoorden).filter(a => a !== null).length;
+        const beantwoord = Object.values(userAntwoorden).filter(a => a !== null).length;
         const percentage = (beantwoord / vragen.length) * 100;
-        voortgang.style.width = `${percentage}%`;
+        if (voortgang) voortgang.style.width = `${percentage}%`;
+        if (scoreElement) scoreElement.textContent = beantwoord;
     }
 
     // Event listeners voor navigatieknoppen
-    vorigeKnop.addEventListener('click', function() {
-        if (huidigeVraagIndex > 0) {
-            huidigeVraagIndex--;
-            toonVraag(huidigeVraagIndex);
-        }
-    });
+    if (vorigeKnop) {
+        vorigeKnop.addEventListener('click', function() {
+            if (huidigeVraagIndex > 0) {
+                huidigeVraagIndex--;
+                toonVraag(huidigeVraagIndex);
+            }
+        });
+    }
 
-    volgendeKnop.addEventListener('click', function() {
-        if (antwoorden[vragen[huidigeVraagIndex].id] === null) {
-            alert('Selecteer een antwoord voordat je doorgaat.');
-            return;
-        }
+    if (volgendeKnop) {
+        volgendeKnop.addEventListener('click', function() {
+            if (userAntwoorden[vragen[huidigeVraagIndex].id] === null) {
+                alert('Selecteer een antwoord voordat je doorgaat.');
+                return;
+            }
 
-        if (huidigeVraagIndex < vragen.length - 1) {
-            huidigeVraagIndex++;
-            toonVraag(huidigeVraagIndex);
-        }
-    });
+            if (huidigeVraagIndex < vragen.length - 1) {
+                huidigeVraagIndex++;
+                toonVraag(huidigeVraagIndex);
+            }
+        });
+    }
 
-    indienenKnop.addEventListener('click', function() {
-        if (antwoorden[vragen[huidigeVraagIndex].id] === null) {
-            alert('Selecteer een antwoord voordat je de quiz indient.');
-            return;
-        }
+    if (indienenKnop) {
+        indienenKnop.addEventListener('click', function() {
+            if (userAntwoorden[vragen[huidigeVraagIndex].id] === null) {
+                alert('Selecteer een antwoord voordat je de quiz indient.');
+                return;
+            }
 
-        // Bereken score en toon resultaten
-        toonResultaten();
-    });
+            // Bereken score en toon resultaten
+            toonResultaten();
+        });
+    }
 
-    // Toon de quizresultaten
+    // Toon de quizresultaten met leaderboard
     function toonResultaten() {
-        // Hier zou je de juiste antwoorden moeten controleren
-        // Voor dit voorbeeld gaan we ervan uit dat het eerste antwoord altijd correct is
+        // Bereken score
         score = 0;
         let samenvattingHTML = '';
 
         vragen.forEach((vraag, index) => {
-            const gegevenAntwoordId = antwoorden[vraag.id];
-            // Aanname: eerste keuze is altijd het juiste antwoord
-            const juisteAntwoordId = vraag.keuzes[0].id;
-            const isCorrect = gegevenAntwoordId === juisteAntwoordId;
+            const gegevenAntwoordId = userAntwoorden[vraag.id];
+            const juisteAntwoord = vraag.keuzes.find(keuze => keuze.isCorrect);
+            const gegevenAntwoord = vraag.keuzes.find(k => k.id === gegevenAntwoordId);
+
+            const isCorrect = juisteAntwoord && gegevenAntwoordId === juisteAntwoord.id;
 
             if (isCorrect) score++;
 
-            const gegevenAntwoord = vraag.keuzes.find(k => k.id === gegevenAntwoordId)?.text || 'Niet beantwoord';
-            const juisteAntwoord = vraag.keuzes[0].text;
-
             samenvattingHTML += `
-                        <div class="samenvatting-item">
-                            <div class="samenvatting-vraag">Vraag ${index + 1}: ${vraag.vraagtekst}</div>
-                            <div class="${isCorrect ? 'juist' : 'onjuist'}">
-                                Jouw antwoord: ${gegevenAntwoord} ${isCorrect ? '✓' : '✗'}
-                            </div>
-                            ${!isCorrect ? `<div class="juist">Juiste antwoord: ${juisteAntwoord}</div>` : ''}
-                        </div>
-                    `;
+                <div class="samenvatting-item">
+                    <div class="samenvatting-vraag">Vraag ${index + 1}: ${vraag.vraagtekst}</div>
+                    <div class="${isCorrect ? 'juist' : 'onjuist'}">
+                        Jouw antwoord: ${gegevenAntwoord ? gegevenAntwoord.text : 'Niet beantwoord'} ${isCorrect ? '✓' : '✗'}
+                    </div>
+                    ${!isCorrect && juisteAntwoord ? `<div class="juist">Juiste antwoord: ${juisteAntwoord.text}</div>` : ''}
+                </div>
+            `;
         });
 
-        // Toon resultaten
-        quizContent.style.display = 'none';
-        document.querySelector('.nav-knoppen').style.display = 'none';
-        document.querySelector('.progress-container').style.display = 'none';
-        aiUitlegContainer.style.display = 'none';
-        aiHelpKnop.style.display = 'none';
+        // Genereer leaderboard
+        const leaderboardData = generateLeaderboard(score);
+        const playerRank = leaderboardData.find(p => p.isPlayer)?.rank || 'N/A';
+        const motivationalMessage = getMotivationalMessage(score, vragen.length, playerRank);
+        const leaderboardHTML = createLeaderboardHTML(leaderboardData);
 
-        resultatenContainer.innerHTML = `
-                    <h2>Quiz Voltooid!</h2>
-                    <div class="eindscore">Jouw score: ${score} / ${vragen.length}</div>
-                    <div class="samenvatting">
-                        <h3>Samenvatting:</h3>
-                        ${samenvattingHTML}
+        // Verberg quiz elementen
+        quizContent.style.display = 'none';
+        const navKnoppen = document.querySelector('.nav-knoppen');
+        const progressContainer = document.querySelector('.progress-container');
+        const aiHelpContainer = document.querySelector('.ai-help-container');
+
+        if (navKnoppen) navKnoppen.style.display = 'none';
+        if (progressContainer) progressContainer.style.display = 'none';
+        if (aiUitlegContainer) aiUitlegContainer.style.display = 'none';
+        if (aiHelpKnop) aiHelpKnop.style.display = 'none';
+        if (aiHelpContainer) aiHelpContainer.style.display = 'none';
+
+        // Toon resultaten met leaderboard
+        if (resultatenContainer) {
+            resultatenContainer.innerHTML = `
+                <div class="results-header">
+                    <h2>🎉 Quiz Voltooid!</h2>
+                    <div class="eindscore">
+                        <div class="score-display">
+                            <span class="score-number">${score}</span>
+                            <span class="score-divider">/</span>
+                            <span class="total-questions">${vragen.length}</span>
+                        </div>
+                        <div class="score-percentage">${Math.round((score / vragen.length) * 100)}%</div>
                     </div>
-                    <button class="opnieuw-knop" onclick="window.location.reload()">Quiz Opnieuw Spelen</button>
-                `;
-        resultatenContainer.style.display = 'block';
+                    <div class="player-rank">Jouw positie: #${playerRank}</div>
+                    <div class="motivational-message">${motivationalMessage}</div>
+                </div>
+                
+                <div class="leaderboard-container">
+                    <h3 class="leaderboard-title">🏆 Leaderboard</h3>
+                    <ul class="leaderboard-list">
+                        ${leaderboardHTML}
+                    </ul>
+                </div>
+
+                <div class="samenvatting">
+                    <h3>📋 Gedetailleerde Resultaten:</h3>
+                    ${samenvattingHTML}
+                </div>
+
+                <div class="action-buttons">
+                    <button class="opnieuw-knop" onclick="window.location.reload()">
+                        🔄 Quiz Opnieuw Spelen
+                    </button>
+                    <button class="deel-knop" onclick="deelScore(${score}, ${vragen.length})">
+                        📤 Deel je Score
+                    </button>
+                </div>
+            `;
+
+            resultatenContainer.style.display = 'block';
+
+            // Animatie voor score revealing
+            setTimeout(() => {
+                const scoreDisplay = document.querySelector('.score-display');
+                if (scoreDisplay) {
+                    scoreDisplay.style.animation = 'scoreReveal 1s ease-out';
+                }
+            }, 300);
+        }
     }
+
+    // Functie om score te delen (placeholder)
+    window.deelScore = function(score, total) {
+        const percentage = Math.round((score / total) * 100);
+        const text = `Ik heb zojuist ${score}/${total} (${percentage}%) gehaald op de Beroepsethiek Quiz! 🎯`;
+
+        if (navigator.share) {
+            navigator.share({
+                title: 'Mijn Quiz Resultaat',
+                text: text,
+                url: window.location.href
+            }).catch(console.error);
+        } else {
+            // Fallback: kopieer naar clipboard
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Score gekopieerd naar clipboard! 📋');
+            }).catch(() => {
+                alert(`Jouw score: ${text}`);
+            });
+        }
+    };
 });
