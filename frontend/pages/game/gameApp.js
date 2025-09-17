@@ -13,6 +13,8 @@ const loadingEl = document.getElementById('loading');
 let apiQuestions = [];
 let apiAnswers = [];
 let processedQuestions = [];
+let currentExamId = null;
+let currentExamName = null;
 
 let gameState = {
     player: { x: 400, y: 550, width: 60, height: 30, speed: 5 },
@@ -29,26 +31,59 @@ let gameState = {
     lastShot: 0
 };
 
+// Function to get URL parameters
+function getUrlParameter(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+}
+
 // Function to load and process data from API
 async function loadGameData() {
     try {
         console.log('Loading questions and answers from API...');
+
+        // Get exam parameters from URL
+        currentExamId = getUrlParameter('examenId');
+        currentExamName = getUrlParameter('examenNaam');
+
+        if (currentExamName) {
+            // Update loading message with exam name
+            loadingEl.innerHTML = `
+                <h2>Vragen laden voor ${decodeURIComponent(currentExamName)}...</h2>
+                <p>Het spel wordt voorbereid...</p>
+            `;
+        }
 
         // Controleer of de functies bestaan
         if (typeof window.getvragen !== 'function' || typeof window.getAntwoorden !== 'function') {
             throw new Error('API functies zijn niet beschikbaar. Controleer client.js');
         }
 
-        // Load both questions and answers met betere error handling
-        const questionsPromise = window.getvragen().catch(error => {
-            console.error('Fout bij ophalen vragen:', error);
-            throw new Error('Kon vragen niet ophalen: ' + error.message);
-        });
+        // Load both questions and answers with exam ID parameter
+        let questionsPromise, answersPromise;
 
-        const answersPromise = window.getAntwoorden().catch(error => {
-            console.error('Fout bij ophalen antwoorden:', error);
-            throw new Error('Kon antwoorden niet ophalen: ' + error.message);
-        });
+        if (currentExamId) {
+            questionsPromise = window.getvragen(currentExamId).catch(error => {
+                console.error('Fout bij ophalen vragen:', error);
+                throw new Error('Kon vragen niet ophalen: ' + error.message);
+            });
+
+            answersPromise = window.getAntwoorden(currentExamId).catch(error => {
+                console.error('Fout bij ophalen antwoorden:', error);
+                throw new Error('Kon antwoorden niet ophalen: ' + error.message);
+            });
+        } else {
+            // Fallback to default if no exam ID
+            questionsPromise = window.getvragen().catch(error => {
+                console.error('Fout bij ophalen vragen:', error);
+                throw new Error('Kon vragen niet ophalen: ' + error.message);
+            });
+
+            answersPromise = window.getAntwoorden().catch(error => {
+                console.error('Fout bij ophalen antwoorden:', error);
+                throw new Error('Kon antwoorden niet ophalen: ' + error.message);
+            });
+        }
 
         const [questions, answers] = await Promise.all([questionsPromise, answersPromise]);
 
@@ -75,7 +110,12 @@ async function loadGameData() {
         console.log('Processed questions:', processedQuestions.length);
 
         if (processedQuestions.length === 0) {
-            throw new Error('Geen bruikbare vragen gevonden');
+            throw new Error('Geen bruikbare vragen gevonden voor dit examen');
+        }
+
+        // Update question panel with exam info if available
+        if (currentExamName) {
+            questionEl.textContent = `Welkom bij ${decodeURIComponent(currentExamName)} Space Invaders! Schiet het juiste antwoord!`;
         }
 
         // Hide loading screen and start game
@@ -98,45 +138,79 @@ function processApiData(questions, answers) {
         return processed;
     }
 
+    console.log('Processing data:');
+    console.log('Questions structure:', questions.length > 0 ? Object.keys(questions[0]) : 'No questions');
+    console.log('Answers structure:', answers.length > 0 ? Object.keys(answers[0]) : 'No answers');
+
     for (const question of questions) {
         try {
-            // Find the corresponding answer
-            const answer = answers.find(a => a.vraag_id === question.id);
+            console.log(`Processing question ${question.id}:`, question);
 
-            if (!answer) {
-                console.warn(`No answer found for question ${question.id}`);
-                continue;
-            }
-
-            // Only process multiple choice questions
+            // Skip questions that are not multiple choice (like ordering questions)
             if (!question.keuzes || !Array.isArray(question.keuzes) || question.keuzes.length < 2) {
-                console.warn(`Question ${question.id} has insufficient choices`);
+                console.log(`Skipping question ${question.id} - not suitable for game (${question.keuzes ? question.keuzes.length : 0} choices)`);
                 continue;
             }
 
-            // Find correct answer index
-            const correctIndex = question.keuzes.findIndex(choice =>
-                choice.id === answer.correct_antwoord_id
+            // Get the question ID
+            const questionId = question.id;
+
+            // Find the correct answer from the answers array
+            const correctAnswerData = answers.find(a => a.vraag_id === questionId);
+
+            if (!correctAnswerData) {
+                console.warn(`No correct answer data found for question ${questionId}`);
+                continue;
+            }
+
+            console.log(`Found correct answer data:`, correctAnswerData);
+
+            // Get all answer choices from the question's keuzes array
+            const answerChoices = question.keuzes.map(keuze => ({
+                id: keuze.id,
+                text: keuze.text || keuze.label || 'Geen tekst'
+            }));
+
+            console.log(`Answer choices for question ${questionId}:`, answerChoices);
+
+            // Find which choice is the correct one by matching the correct_antwoord_id
+            const correctIndex = answerChoices.findIndex(choice =>
+                choice.id === correctAnswerData.correct_antwoord_id
             );
 
             if (correctIndex === -1) {
-                console.warn(`Correct answer not found for question ${question.id}`);
+                console.warn(`Could not find correct answer choice for question ${questionId}. Looking for ID: ${correctAnswerData.correct_antwoord_id}`);
+                console.log('Available choice IDs:', answerChoices.map(c => c.id));
                 continue;
             }
 
+            // Get question text
+            const questionText = question.vraagtekst || question.text || 'Geen vraagtekst';
+
             // Convert to game format
-            processed.push({
-                id: question.id,
-                question: question.vraagtekst || 'Geen vraagtekst',
-                answers: question.keuzes.map(choice => choice.text || 'Geen tekst'),
+            const processedQuestion = {
+                id: questionId,
+                question: questionText,
+                answers: answerChoices.map(choice => choice.text),
                 correct: correctIndex,
                 originalQuestion: question,
-                originalAnswer: answer
-            });
+                correctAnswerData: correctAnswerData
+            };
+
+            processed.push(processedQuestion);
+            console.log(`Successfully processed question ${questionId}:`, processedQuestion);
 
         } catch (error) {
-            console.error(`Error processing question ${question.id}:`, error);
+            console.error(`Error processing question ${question.id || 'unknown'}:`, error);
         }
+    }
+
+    console.log(`Final result: Processed ${processed.length} out of ${questions.length} questions`);
+
+    if (processed.length === 0 && questions.length > 0) {
+        console.error('No questions were processed successfully. Data structure mismatch detected.');
+        console.log('First question sample:', questions[0]);
+        console.log('First answer sample:', answers.length > 0 ? answers[0] : 'No answers');
     }
 
     return processed;
@@ -144,10 +218,16 @@ function processApiData(questions, answers) {
 
 function showError(message) {
     loadingEl.innerHTML = `
-            <h2>Fout!</h2>
-            <div class="error">${message}</div>
-            <button class="restart-btn" onclick="location.reload()">Opnieuw Proberen</button>
-        `;
+        <h2>Fout!</h2>
+        <div class="error">${message}</div>
+        <button class="restart-btn" onclick="location.reload()">Opnieuw Proberen</button>
+        <button class="back-btn" onclick="goBackToExams()">Terug naar Examens</button>
+    `;
+}
+
+function goBackToExams() {
+    // Navigate back to exam selection
+    window.location.href = '../chooseExam/chooseExam.html';
 }
 
 // Initialize game with processed questions
@@ -159,9 +239,21 @@ function initGame() {
 
     gameState.gameRunning = true;
     gameState.currentQuestion = 0;
+
+    // Shuffle questions for variety
+    shuffleArray(processedQuestions);
+
     createInvaders();
     loadQuestion();
     gameLoop();
+}
+
+// Fisher-Yates shuffle algorithm
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
 }
 
 function createInvaders() {
@@ -170,18 +262,21 @@ function createInvaders() {
     if (gameState.currentQuestion >= processedQuestions.length) {
         // If we've gone through all questions, cycle back to start
         gameState.currentQuestion = 0;
+        // Shuffle again for variety
+        shuffleArray(processedQuestions);
     }
 
     const question = processedQuestions[gameState.currentQuestion];
-    const startX = 150;
+    const startX = 100;
     const startY = 100;
-    const spacing = Math.min(150, (canvas.width - 300) / Math.max(1, question.answers.length - 1));
+    const maxWidth = canvas.width - 200;
+    const spacing = Math.min(150, maxWidth / Math.max(1, question.answers.length - 1));
 
     for (let i = 0; i < question.answers.length; i++) {
         gameState.invaders.push({
             x: startX + (i * spacing),
             y: startY,
-            width: 120,
+            width: Math.min(120, maxWidth / question.answers.length - 10),
             height: 60,
             text: question.answers[i],
             isCorrect: i === question.correct,
@@ -456,6 +551,10 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keyup', (e) => {
     gameState.keys[e.key] = false;
 });
+
+// Make functions globally available
+window.restartGame = restartGame;
+window.goBackToExams = goBackToExams;
 
 // Start loading data when page loads
 window.addEventListener('load', () => {
