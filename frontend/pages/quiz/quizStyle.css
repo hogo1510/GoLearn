@@ -28,7 +28,7 @@ header {
 }
 
 h1 {
-    color: #2c3e50;
+    color: #39B9EC;
     margin-bottom: 10px;
 }
 
@@ -48,7 +48,7 @@ h1 {
 }
 
 .score-container {
-    background-color: #3498db;
+    background-color: #39B9EC;
     color: white;
     padding: 10px 15px;
     border-radius: 20px;
@@ -56,7 +56,7 @@ h1 {
 }
 
 #ai-help-knop {
-    background-color: #9b59b6;
+    background-color: #E72B76;
     color: white;
     border: none;
     padding: 10px 15px;
@@ -70,7 +70,7 @@ h1 {
 }
 
 #ai-help-knop:hover {
-    background-color: #8e44ad;
+    background-color: #C81F5E;
 }
 
 #ai-help-knop:disabled {
@@ -88,7 +88,7 @@ h1 {
 
 .progress-bar {
     height: 100%;
-    background-color: #3498db;
+    background-color: #39B9EC;
     width: 0%;
     transition: width 0.3s ease;
 }
@@ -98,7 +98,7 @@ h1 {
 }
 
 .vraag-nummer {
-    color: #3498db;
+    color: #39B9EC;
     font-weight: bold;
     margin-bottom: 5px;
 }
@@ -126,13 +126,13 @@ h1 {
 
 .keuze:hover {
     background-color: #e9ecef;
-    border-color: #3498db;
+    border-color: #39B9EC;
 }
 
 .keuze.geselecteerd {
-    background-color: #3498db;
+    background-color: #39B9EC;
     color: white;
-    border-color: #3498db;
+    border-color: #39B9EC;
 }
 
 .nav-knoppen {
@@ -160,22 +160,22 @@ button {
 }
 
 #volgende-knop {
-    background-color: #2ecc71;
+    background-color: #39B9EC;
     color: white;
 }
 
 #volgende-knop:hover {
-    background-color: #27ae60;
+    background-color: #2A8BB5;
 }
 
 #indienen-knop {
-    background-color: #e74c3c;
+    background-color: #E72B76;
     color: white;
     display: none;
 }
 
 #indienen-knop:hover {
-    background-color: #c0392b;
+    background-color: #C81F5E;
 }
 
 .resultaten-container {
@@ -190,7 +190,7 @@ button {
 }
 
 .results-header h2 {
-    color: #2c3e50;
+    color: #39B9EC;
     font-size: 2.5rem;
     margin-bottom: 20px;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
@@ -211,7 +211,7 @@ button {
 .score-number {
     font-size: 4rem;
     font-weight: bold;
-    color: #2ecc71;
+    color: #39B9EC;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
@@ -222,25 +222,25 @@ button {
 
 .total-questions {
     font-size: 3rem;
-    color: #3498db;
+    color: #E72B76;
 }
 
 .score-percentage {
     font-size: 1.5rem;
-    color: #e67e22;
+    color: #4FC9ED;
     font-weight: bold;
     margin-bottom: 15px;
 }
 
 .player-rank {
     font-size: 1.2rem;
-    color: #9b59b6;
+    color: #E72B76;
     font-weight: bold;
     margin-bottom: 15px;
 }
 
 .motivational-message {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #39B9EC 0%, #E72B76 100%);
     color: white;
     padding: 15px 20px;
     border-radius: 25px;
@@ -252,16 +252,16 @@ button {
 
 /* Enhanced Leaderboard Styling */
 .leaderboard-container {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8f7fc 100%);
     border-radius: 15px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     padding: 25px;
     margin: 30px 0;
-    border: 3px solid #3498db;
+    border: 3px solid #39B9EC;
 }
 
 .leaderboard-title {
-    color: #2c3e50;
+    color: #39B9EC;
     margin-bottom: 20px;
     text-align: center;
     font-size: 1.8rem;
@@ -292,30 +292,32 @@ button {
 
 /* Medal styling for top 3 */
 .leaderboard-item.medal-1 {
-    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-    border-color: #f1c40f;
+    background: linear-gradient(135deg, #39B9EC 0%, #4FC9ED 100%);
+    border-color: #39B9EC;
     font-weight: bold;
-    animation: goldShimmer 2s ease-in-out infinite alternate;
+    color: white;
+    animation: blueShimmer 2s ease-in-out infinite alternate;
 }
 
 .leaderboard-item.medal-2 {
-    background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
-    border-color: #95a5a6;
+    background: linear-gradient(135deg, #E72B76 0%, #EC4B8B 100%);
+    border-color: #E72B76;
     font-weight: bold;
+    color: white;
 }
 
 .leaderboard-item.medal-3 {
-    background: linear-gradient(135deg, #cd7f32 0%, #d4963a 100%);
-    border-color: #d35400;
+    background: linear-gradient(135deg, #2A8BB5 0%, #39B9EC 100%);
+    border-color: #2A8BB5;
     font-weight: bold;
     color: white;
 }
 
 .leaderboard-item.current-player {
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    background: linear-gradient(135deg, #E72B76 0%, #C81F5E 100%);
     color: white;
     font-weight: bold;
-    border-color: #e74c3c;
+    border-color: #E72B76;
     transform: scale(1.02);
     animation: playerPulse 2s ease-in-out infinite;
 }
@@ -335,7 +337,7 @@ button {
 
 .leaderboard-score {
     font-weight: bold;
-    color: #3498db;
+    color: #39B9EC;
     font-size: 1.1rem;
     background: white;
     padding: 5px 10px;
@@ -344,12 +346,14 @@ button {
     text-align: center;
 }
 
+.leaderboard-item.medal-1 .leaderboard-score,
+.leaderboard-item.medal-2 .leaderboard-score,
 .leaderboard-item.medal-3 .leaderboard-score {
-    color: #d35400;
+    color: #39B9EC;
 }
 
 .leaderboard-item.current-player .leaderboard-score {
-    color: #e74c3c;
+    color: #E72B76;
     font-weight: bold;
 }
 
@@ -359,11 +363,11 @@ button {
     background: #f8f9fa;
     padding: 20px;
     border-radius: 10px;
-    border-left: 5px solid #3498db;
+    border-left: 5px solid #39B9EC;
 }
 
 .samenvatting h3 {
-    color: #2c3e50;
+    color: #39B9EC;
     margin-bottom: 20px;
     text-align: center;
 }
@@ -383,16 +387,16 @@ button {
 .samenvatting-vraag {
     font-weight: 500;
     margin-bottom: 8px;
-    color: #2c3e50;
+    color: #39B9EC;
 }
 
 .juist {
-    color: #2ecc71;
+    color: #39B9EC;
     font-weight: bold;
 }
 
 .onjuist {
-    color: #e74c3c;
+    color: #E72B76;
     font-weight: bold;
 }
 
@@ -405,7 +409,18 @@ button {
 }
 
 .opnieuw-knop {
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    background: linear-gradient(135deg, #39B9EC 0%, #2A8BB5 100%);
     color: white;
     padding: 15px 30px;
+}
+
+@keyframes blueShimmer {
+    0% { background: linear-gradient(135deg, #39B9EC 0%, #4FC9ED 100%); }
+    100% { background: linear-gradient(135deg, #4FC9ED 0%, #39B9EC 100%); }
+}
+
+@keyframes playerPulse {
+    0% { box-shadow: 0 0 10px rgba(231, 43, 118, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(231, 43, 118, 0.8); }
+    100% { box-shadow: 0 0 10px rgba(231, 43, 118, 0.5); }
 }
