@@ -353,6 +353,7 @@ function updateInvaders() {
 }
 
 function checkCollisions() {
+    // Check bullet-invader collisions
     for (let i = gameState.bullets.length - 1; i >= 0; i--) {
         let bullet = gameState.bullets[i];
 
@@ -391,6 +392,59 @@ function checkCollisions() {
                 }
                 break;
             }
+        }
+    }
+
+    // Check invader-player collisions (new functionality)
+    for (let invader of gameState.invaders) {
+        if (!invader.alive) continue;
+
+        // Check if invader touches player
+        if (invader.x < gameState.player.x + gameState.player.width &&
+            invader.x + invader.width > gameState.player.x &&
+            invader.y < gameState.player.y + gameState.player.height &&
+            invader.y + invader.height > gameState.player.y) {
+
+            // Invader hit player - lose life regardless of correct/wrong answer
+            gameState.lives--;
+            invader.alive = false; // Remove the invader that hit the player
+
+            if (invader.isCorrect) {
+                showFeedback("Aangeraakt door correct antwoord! -1 leven", false);
+            } else {
+                showFeedback("Aangeraakt door verkeerd antwoord! -1 leven", false);
+            }
+
+            if (gameState.lives <= 0) {
+                endGame();
+            } else {
+                // Reset question after collision
+                setTimeout(() => {
+                    createInvaders();
+                }, 1500);
+            }
+            break; // Only handle one collision per frame
+        }
+
+        // Check if invader reached bottom of screen
+        if (invader.y + invader.height >= canvas.height - 50) {
+            gameState.lives--;
+            invader.alive = false;
+
+            if (invader.isCorrect) {
+                showFeedback("Correct antwoord bereikte de bodem! -1 leven", false);
+            } else {
+                showFeedback("Verkeerd antwoord bereikte de bodem! -1 leven", false);
+            }
+
+            if (gameState.lives <= 0) {
+                endGame();
+            } else {
+                setTimeout(() => {
+                    createInvaders();
+                }, 1500);
+            }
+            break;
         }
     }
 }
