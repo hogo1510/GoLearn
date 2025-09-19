@@ -344,10 +344,6 @@ h1 {
         flex-wrap: wrap;
         gap: 10px;
     }
-
-// Draw missile count visualization
-for (let i = 0; i < gameState.missiles && i < 15; i++) {
-
     .ui-element {
         min-width: 100px;
         flex: 1;
@@ -367,5 +363,5 @@ for (let i = 0; i < gameState.missiles && i < 15; i++) {
         width: 95%;
         padding: 20px;
     }
-}
+
 }

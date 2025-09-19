@@ -841,15 +841,18 @@ function draw() {
         ctx.fillText('⏸️ GEPAUZEERD', canvas.width/2, 50);
         ctx.fillText('Beantwoord de vraag om verder te gaan', canvas.width/2, 80);
     }
-    const x = canvas.width - 30;
-    const y = 30 + (i * 15);
 
-    ctx.fillStyle = '#00d4ff';
-    ctx.fillRect(x, y, 20, 4);
+    // Draw missiles indicator
+    for (let i = 0; i < gameState.missiles; i++) {
+        const x = canvas.width - 30;
+        const y = 30 + (i * 15);
 
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(x + 16, y - 1, 4, 6);
+        ctx.fillStyle = '#00d4ff';
+        ctx.fillRect(x, y, 20, 4);
 
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x + 16, y - 1, 4, 6);
+    }
 }
 
 function update() {
@@ -921,6 +924,7 @@ function restartGame() {
         cityHealth: 100,
         missiles: 10,
         gameRunning: false,
+        paused: false,
         threats: [],
         explosions: [],
         buildings: [],
