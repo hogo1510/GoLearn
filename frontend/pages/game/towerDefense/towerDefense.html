@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>De Ethiek-Barricade</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            color: #3498db;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-size: 2.5em;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .game-ui {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+            background: rgba(52, 73, 94, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .ui-element {
+            text-align: center;
+            padding: 10px;
+            background: rgba(44, 62, 80, 0.9);
+            border-radius: 8px;
+            min-width: 100px;
+        }
+
+        .ui-element h3 {
+            color: #3498db;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .ui-element span {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        #gameCanvas {
+            border: 3px solid #3498db;
+            border-radius: 10px;
+            background: #1a252f;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        }
+
+        .question-panel {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(52, 73, 94, 0.9);
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .question-panel h3 {
+            color: #e74c3c;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        #question {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #ecf0f1;
+        }
+
+        .answers-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .answer-btn {
+            padding: 15px;
+            background: linear-gradient(145deg, #34495e, #2c3e50);
+            color: white;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .answer-btn:hover {
+            background: linear-gradient(145deg, #3498db, #2980b9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .answer-btn.correct {
+            background: linear-gradient(145deg, #27ae60, #229954);
+            border-color: #2ecc71;
+        }
+
+        .answer-btn.incorrect {
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            border-color: #e74c3c;
+        }
+
+        .feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px;
+            border-radius: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .feedback.show {
+            opacity: 1;
+        }
+
+        .feedback.correct {
+            background: linear-gradient(145deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .feedback.incorrect {
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .game-over-content {
+            background: linear-gradient(145deg, #2c3e50, #34495e);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 3px solid #3498db;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+            max-width: 500px;
+        }
+
+        .game-over-content h2 {
+            color: #e74c3c;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .game-over-content p {
+            margin: 15px 0;
+            font-size: 1.2em;
+        }
+
+        .btn {
+            margin: 10px;
+            padding: 12px 24px;
+            background: linear-gradient(145deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: linear-gradient(145deg, #2980b9, #3498db);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .restart-btn {
+            background: linear-gradient(145deg, #27ae60, #229954);
+        }
+
+        .restart-btn:hover {
+            background: linear-gradient(145deg, #229954, #27ae60);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            background: rgba(52, 73, 94, 0.9);
+            border-radius: 15px;
+            margin: 20px;
+        }
+
+        .loading h2 {
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+
+        .error {
+            color: #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e74c3c;
+            margin: 20px 0;
+        }
+
+        .client-info {
+            background: rgba(44, 62, 80, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #f39c12;
+        }
+
+        .client-info h4 {
+            color: #f39c12;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .answers-container {
+                grid-template-columns: 1fr;
+            }
+
+            .game-ui {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            #gameCanvas {
+                width: 100%;
+                max-width: 400px;
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+<h1>🏢 De Ethiek-Barricade 🛡️</h1>
+
+<div class="game-container">
+    <div class="game-ui">
+        <div class="ui-element">
+            <h3>Score</h3>
+            <span id="score">0</span>
+        </div>
+        <div class="ui-element">
+            <h3>Levens</h3>
+            <span id="lives">3</span>
+        </div>
+        <div class="ui-element">
+            <h3>Level</h3>
+            <span id="level">1</span>
+        </div>
+        <div class="ui-element">
+            <h3>Barricade</h3>
+            <span id="barricadeStrength">100%</span>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+    <div class="question-panel">
+        <div id="clientInfo" class="client-info" style="display: none;">
+            <h4>Cliënt Informatie</h4>
+            <p id="clientDetails"></p>
+        </div>
+
+        <h3>Situatie Analyse</h3>
+        <div id="question">Welkom bij het Gemeenschapscentrum! Bereid je voor om cliënten te helpen...</div>
+
+        <div class="answers-container" id="answersContainer" style="display: none;">
+            <!-- Answer buttons will be dynamically created here -->
+        </div>
+    </div>
+</div>
+
+<div class="feedback" id="feedback"></div>
+
+<div class="game-over" id="gameOver">
+    <div class="game-over-content">
+        <h2>Game Over</h2>
+        <p>Je hebt <span id="finalScore">0</span> punten gescoord!</p>
+        <p>Je hebt <span id="clientsHelped">0</span> cliënten geholpen.</p>
+        <button class="btn restart-btn" onclick="restartGame()">Opnieuw Spelen</button>
+        <button class="btn" onclick="goBackToExams()">Terug naar Examens</button>
+    </div>
+</div>
+
+<div class="loading" id="loading">
+    <h2>Gemeenschapscentrum wordt voorbereid...</h2>
+    <p>Cliënten en ethische dilemma's worden geladen...</p>
+</div>
+
+<script>
+    // Mock client.js functions for demonstration
+    window.getvragen = function(examId) {
+        return Promise.resolve([
+            {
+                id: 1,
+                vraagtekst: "Ahmed (16) spijbelt al weken. Hij komt naar je toe en zegt: 'Ik haat school, het heeft geen zin.' Wat is je eerste stap?",
+                keuzes: [
+                    {id: 1, text: "Meteen de leerplichtambtenaar bellen"},
+                    {id: 2, text: "Een gesprek aangaan met Ahmed om zijn verhaal te horen"},
+                    {id: 3, text: "Zijn ouders confronteren met het spijbelgedrag"},
+                    {id: 4, text: "Wachten tot hij zelf om hulp komt vragen"}
+                ],
+                client: "Ahmed, 16 jaar, spijbelt veel"
+            },
+            {
+                id: 2,
+                vraagtekst: "Maria (45) is haar baan kwijtgeraakt en staat op het punt uit huis gezet te worden. Ze is wanhopig. Wat doe je eerst?",
+                keuzes: [
+                    {id: 5, text: "Haar doorverwijzen naar de gemeente voor schuldhulpverlening"},
+                    {id: 6, text: "Luisteren naar haar verhaal en samen kijken naar opties"},
+                    {id: 7, text: "Geld lenen van het noodfonds"},
+                    {id: 8, text: "Zeggen dat ze realistisch moet zijn"}
+                ],
+                client: "Maria, 45 jaar, dreigende huisuitzetting"
+            },
+            {
+                id: 3,
+                vraagtekst: "Jamal (22) heeft problemen met drugs en is agressief tegen vrijwilligers. Wat is de beste aanpak?",
+                keuzes: [
+                    {id: 9, text: "Hem vragen het centrum te verlaten"},
+                    {id: 10, text: "Grenzen stellen maar wel ondersteuning bieden"},
+                    {id: 11, text: "De politie bellen"},
+                    {id: 12, text: "Negeren en hopen dat het overgaat"}
+                ],
+                client: "Jamal, 22 jaar, verslaving en agressie"
+            },
+            {
+                id: 4,
+                vraagtekst: "Fatima (28) spreekt slecht Nederlands en begrijpt het zorgsysteem niet. Haar kinderen zijn vaak ziek. Wat doe je?",
+                keuzes: [
+                    {id: 13, text: "Haar naar de huisarts sturen"},
+                    {id: 14, text: "Een tolk regelen en samen het zorgsysteem uitleggen"},
+                    {id: 15, text: "Zeggen dat ze Nederlands moet leren"},
+                    {id: 16, text: "Een folder in haar taal geven"}
+                ],
+                client: "Fatima, 28 jaar, taalbarrière en zieke kinderen"
+            }
+        ]);
+    };
+
+    window.getAntwoorden = function(examId) {
+        return Promise.resolve([
+            {vraag_id: 1, correct_antwoord_id: 2}, // B: Een gesprek aangaan
+            {vraag_id: 2, correct_antwoord_id: 6}, // B: Luisteren en samen kijken
+            {vraag_id: 3, correct_antwoord_id: 10}, // B: Grenzen stellen maar ondersteuning bieden
+            {vraag_id: 4, correct_antwoord_id: 14}  // B: Tolk regelen en uitleggen
+        ]);
+    };
+
+    // Game variables
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const questionEl = document.getElementById('question');
+    const scoreEl = document.getElementById('score');
+    const livesEl = document.getElementById('lives');
+    const levelEl = document.getElementById('level');
+    const barricadeStrengthEl = document.getElementById('barricadeStrength');
+    const gameOverEl = document.getElementById('gameOver');
+    const finalScoreEl = document.getElementById('finalScore');
+    const clientsHelpedEl = document.getElementById('clientsHelped');
+    const feedbackEl = document.getElementById('feedback');
+    const loadingEl = document.getElementById('loading');
+    const clientInfoEl = document.getElementById('clientInfo');
+    const clientDetailsEl = document.getElementById('clientDetails');
+    const answersContainerEl = document.getElementById('answersContainer');
+
+    let apiQuestions = [];
+    let apiAnswers = [];
+    let processedQuestions = [];
+    let currentExamId = null;
+    let currentExamName = null;
+
+    let gameState = {
+        score: 0,
+        lives: 3,
+        level: 1,
+        gameRunning: false,
+        currentQuestion: 0,
+        barricadeStrength: 100,
+        clientsHelped: 0,
+        clients: [],
+        barricadeBlocks: [],
+        answering: false
+    };
+
+    // Client class
+    class Client {
+        constructor(x, y, info, speed = 1) {
+            this.x = x;
+            this.y = y;
+            this.info = info;
+            this.speed = speed;
+            this.width = 40;
+            this.height = 40;
+            this.stressMeter = 0;
+            this.helped = false;
+            this.color = this.getStressColor();
+        }
+
+        getStressColor() {
+            if (this.stressMeter < 30) return '#27ae60'; // Green - calm
+            if (this.stressMeter < 60) return '#f39c12'; // Orange - concerned
+            return '#e74c3c'; // Red - stressed
+        }
+
+        update() {
+            if (!this.helped) {
+                this.x += this.speed;
+                this.stressMeter += 0.5;
+                this.color = this.getStressColor();
+            }
+        }
+
+        draw() {
+            // Draw client as a person
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x + this.width/2, this.y + 10, 8, 0, Math.PI * 2); // Head
+            ctx.fill();
+
+            ctx.fillRect(this.x + this.width/2 - 8, this.y + 18, 16, 20); // Body
+
+            // Stress meter
+            ctx.fillStyle = '#333';
+            ctx.fillRect(this.x, this.y - 10, this.width, 4);
+            ctx.fillStyle = this.getStressColor();
+            ctx.fillRect(this.x, this.y - 10, (this.width * this.stressMeter) / 100, 4);
+
+            // Name tag
+            ctx.fillStyle = 'white';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.info.split(',')[0], this.x + this.width/2, this.y + 55);
+        }
+    }
+
+    // Barricade block class
+    class BarricadeBlock {
+        constructor(x, y, type) {
+            this.x = x;
+            this.y = y;
+            this.type = type; // 'trust', 'support', 'understanding'
+            this.width = 60;
+            this.height = 20;
+            this.strength = 100;
+            this.color = this.getTypeColor();
+        }
+
+        getTypeColor() {
+            switch(this.type) {
+                case 'trust': return '#3498db';
+                case 'support': return '#27ae60';
+                case 'understanding': return '#f39c12';
+                default: return '#95a5a6';
+            }
+        }
+
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(this.x, this.y, this.width, this.height);
+
+            // Block type label
+            ctx.fillStyle = 'white';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.type.toUpperCase(), this.x + this.width/2, this.y + this.height/2 + 3);
+        }
+    }
+
+    // Function to get URL parameters
+    function getUrlParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    // Function to load and process data from API
+    async function loadGameData() {
+        try {
+            console.log('Loading questions and answers from API...');
+
+            currentExamId = getUrlParameter('examenId');
+            currentExamName = getUrlParameter('examenNaam');
+
+            if (currentExamName) {
+                loadingEl.innerHTML = `
+                        <h2>Ethische dilemma's laden voor ${decodeURIComponent(currentExamName)}...</h2>
+                        <p>Het gemeenschapscentrum wordt voorbereid...</p>
+                    `;
+            }
+
+            if (typeof window.getvragen !== 'function' || typeof window.getAntwoorden !== 'function') {
+                throw new Error('API functies zijn niet beschikbaar. Controleer client.js');
+            }
+
+            let questionsPromise, answersPromise;
+
+            if (currentExamId) {
+                questionsPromise = window.getvragen(currentExamId);
+                answersPromise = window.getAntwoorden(currentExamId);
+            } else {
+                questionsPromise = window.getvragen();
+                answersPromise = window.getAntwoorden();
+            }
+
+            const [questions, answers] = await Promise.all([questionsPromise, answersPromise]);
+
+            if (!Array.isArray(questions) || !Array.isArray(answers)) {
+                throw new Error('Ongeldige data ontvangen van API');
+            }
+
+            apiQuestions = questions;
+            apiAnswers = answers;
+
+            processedQuestions = processApiData(apiQuestions, apiAnswers);
+
+            if (processedQuestions.length === 0) {
+                throw new Error('Geen bruikbare vragen gevonden voor dit examen');
+            }
+
+            if (currentExamName) {
+                questionEl.textContent = `Welkom bij ${decodeURIComponent(currentExamName)} Gemeenschapscentrum!`;
+            }
+
+            loadingEl.style.display = 'none';
+            initGame();
+
+        } catch (error) {
+            console.error('Error loading game data:', error);
+            showError('Kon geen vragen laden: ' + error.message);
+        }
+    }
+
+    // Function to process API data into game format
+    function processApiData(questions, answers) {
+        const processed = [];
+
+        for (const question of questions) {
+            try {
+                if (!question.keuzes || !Array.isArray(question.keuzes) || question.keuzes.length < 2) {
+                    continue;
+                }
+
+                const questionId = question.id;
+                const correctAnswerData = answers.find(a => a.vraag_id === questionId);
+
+                if (!correctAnswerData) {
+                    continue;
+                }
+
+                const answerChoices = question.keuzes.map(keuze => ({
+                    id: keuze.id,
+                    text: keuze.text || keuze.label || 'Geen tekst'
+                }));
+
+                const correctIndex = answerChoices.findIndex(choice =>
+                    choice.id === correctAnswerData.correct_antwoord_id
+                );
+
+                if (correctIndex === -1) {
+                    continue;
+                }
+
+                const questionText = question.vraagtekst || question.text || 'Geen vraagtekst';
+                const clientInfo = question.client || 'Onbekende cliënt';
+
+                const processedQuestion = {
+                    id: questionId,
+                    question: questionText,
+                    answers: answerChoices.map(choice => choice.text),
+                    correct: correctIndex,
+                    clientInfo: clientInfo
+                };
+
+                processed.push(processedQuestion);
+
+            } catch (error) {
+                console.error(`Error processing question ${question.id || 'unknown'}:`, error);
+            }
+        }
+
+        return processed;
+    }
+
+    function showError(message) {
+        loadingEl.innerHTML = `
+                <h2>Fout!</h2>
+                <div class="error">${message}</div>
+                <button class="btn restart-btn" onclick="location.reload()">Opnieuw Proberen</button>
+                <button class="btn" onclick="goBackToExams()">Terug naar Examens</button>
+            `;
+    }
+
+    function goBackToExams() {
+        window.location.href = '../chooseExam/chooseExam.html';
+    }
+
+    // Initialize game
+    function initGame() {
+        if (processedQuestions.length === 0) {
+            showError('Geen vragen beschikbaar');
+            return;
+        }
+
+        gameState.gameRunning = true;
+        gameState.currentQuestion = 0;
+        gameState.barricadeBlocks = [];
+
+        // Initialize barricade
+        initializeBarricade();
+
+        // Shuffle questions for variety
+        shuffleArray(processedQuestions);
+
+        // Start first scenario
+        startNextScenario();
+
+        // Start game loop
+        gameLoop();
+    }
+
+    function initializeBarricade() {
+        const blockWidth = 60;
+        const blockHeight = 20;
+        const centerX = canvas.width / 2;
+        const baseY = canvas.height - 100;
+
+        // Create initial barricade structure
+        for (let row = 0; row < 3; row++) {
+            for (let col = -2; col <= 2; col++) {
+                const x = centerX + (col * blockWidth) - blockWidth/2;
+                const y = baseY - (row * blockHeight);
+                const types = ['trust', 'support', 'understanding'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                gameState.barricadeBlocks.push(new BarricadeBlock(x, y, type));
+            }
+        }
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function startNextScenario() {
+        if (gameState.currentQuestion >= processedQuestions.length) {
+            // Level up
+            gameState.level++;
+            gameState.currentQuestion = 0;
+            shuffleArray(processedQuestions);
+            showFeedback(`Level ${gameState.level}! Nieuwe uitdagingen wachten!`, true);
+        }
+
+        const question = processedQuestions[gameState.currentQuestion];
+
+        // Show client info
+        clientDetailsEl.textContent = question.clientInfo;
+        clientInfoEl.style.display = 'block';
+
+        // Show question
+        questionEl.textContent = question.question;
+
+        // Create answer buttons
+        createAnswerButtons(question);
+
+        // Spawn client
+        spawnClient(question);
+
+        gameState.answering = true;
+    }
+
+    function createAnswerButtons(question) {
+        answersContainerEl.innerHTML = '';
+        answersContainerEl.style.display = 'grid';
+
+        question.answers.forEach((answer, index) => {
+            const button = document.createElement('button');
+            button.className = 'answer-btn';
+            button.textContent = `${String.fromCharCode(65 + index)}. ${answer}`;
+            button.onclick = () => selectAnswer(index, question);
+            answersContainerEl.appendChild(button);
+        });
+    }
+
+    function spawnClient(question) {
+        const client = new Client(-50, canvas.height - 200, question.clientInfo, 0.5);
+        gameState.clients.push(client);
+    }
+
+    function selectAnswer(selectedIndex, question) {
+        if (!gameState.answering) return;
+
+        gameState.answering = false;
+        const isCorrect = selectedIndex === question.correct;
+
+        // Update button styles
+        const buttons = answersContainerEl.querySelectorAll('.answer-btn');
+        buttons.forEach((btn, index) => {
+            if (index === question.correct) {
+                btn.classList.add('correct');
+            } else if (index === selectedIndex && !isCorrect) {
+                btn.classList.add('incorrect');
+            }
+            btn.disabled = true;
+        });
+
+        // Handle the result
+        if (isCorrect) {
+            handleCorrectAnswer();
+        } else {
+            handleIncorrectAnswer();
+        }
+
+        // Continue to next question after delay
+        setTimeout(() => {
+            gameState.currentQuestion++;
+            startNextScenario();
+        }, 3000);
+    }
+
+    function handleCorrectAnswer() {
+        gameState.score += 100 * gameState.level;
+        gameState.clientsHelped++;
+
+        // Help the client
+        const client = gameState.clients[gameState.clients.length - 1];
+        if (client) {
+            client.helped = true;
+            client.stressMeter = Math.max(0, client.stressMeter - 50);
+        }
+
+        // Add barricade block
+        addBarricadeBlock();
+
+        showFeedback("Uitstekende keuze! Cliënt geholpen! +100 punten", true);
+    }
+
+    function handleIncorrectAnswer() {
+        gameState.lives--;
+
+        // Increase client stress
+        const client = gameState.clients[gameState.clients.length - 1];
+        if (client) {
+            client.stressMeter = Math.min(100, client.stressMeter + 30);
+        }
+
+        // Damage barricade
+        damageBarricade();
+
+        showFeedback("Niet de beste keuze... Cliënt wordt gestresster!", false);
+
+        if (gameState.lives <= 0) {
+            endGame();
+        }
+    }
+
+    function addBarricadeBlock() {
+        gameState.barricadeStrength = Math.min(100, gameState.barricadeStrength + 10);
+
+        // Add visual block if space available
+        if (gameState.barricadeBlocks.length < 20) {
+            const centerX = canvas.width / 2;
+            const types = ['trust', 'support', 'understanding'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const x = centerX + (Math.random() - 0.5) * 200;
+            const y = canvas.height - 80 - (Math.random() * 60);
+            gameState.barricadeBlocks.push(new BarricadeBlock(x, y, type));
+        }
+    }
+
+    function damageBarricade() {
+        gameState.barricadeStrength = Math.max(0, gameState.barricadeStrength - 15);
+
+        // Remove a random barricade block
+        if (gameState.barricadeBlocks.length > 0) {
+            const randomIndex = Math.floor(Math.random() * gameState.barricadeBlocks.length);
+            gameState.barricadeBlocks.splice(randomIndex, 1);
+        }
+    }
+
+    function showFeedback(message, isCorrect) {
+        feedbackEl.textContent = message;
+        feedbackEl.className = `feedback ${isCorrect ? 'correct' : 'incorrect'} show`;
+
+        setTimeout(() => {
+            feedbackEl.classList.remove('show');
+        }, 2500);
+    }
+
+    function endGame() {
+        gameState.gameRunning = false;
+        finalScoreEl.textContent = gameState.score;
+        clientsHelpedEl.textContent = gameState.clientsHelped;
+        gameOverEl.style.display = 'flex';
+    }
+
+    function draw() {
+        // Clear canvas with gradient background
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, '#2c3e50');
+        gradient.addColorStop(1, '#34495e');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw community center building
+        ctx.fillStyle = '#7f8c8d';
+        ctx.fillRect(canvas.width - 150, canvas.height - 120, 140, 80);
+        ctx.fillStyle = '#95a5a6';
+        ctx.fillRect(canvas.width - 150, canvas.height - 140, 140, 20); // Roof
+
+        // Building windows
+        ctx.fillStyle = '#f39c12';
+        ctx.fillRect(canvas.width - 130, canvas.height - 100, 15, 15);
+        ctx.fillRect(canvas.width - 100, canvas.height - 100, 15, 15);
+        ctx.fillRect(canvas.width - 70, canvas.height - 100, 15, 15);
+
+        // Sign
+        ctx.fillStyle = '#3498db';
+        ctx.fillRect(canvas.width - 140, canvas.height - 70, 120, 20);
+        ctx.fillStyle = 'white';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('GEMEENSCHAPSCENTRUM', canvas.width - 80, canvas.height - 57);
+
+        // Draw path to center
+        ctx.strokeStyle = '#95a5a6';
+        ctx.lineWidth = 30;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - 50);
+        ctx.lineTo(canvas.width - 150, canvas.height - 50);
+        ctx.stroke();
+
+        // Draw barricade blocks
+        gameState.barricadeBlocks.forEach(block => block.draw());
+
+        // Draw clients
+        gameState.clients.forEach(client => {
+            client.draw();
+
+            // Draw speech bubble if stressed
+            if (client.stressMeter > 60 && !client.helped) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.beginPath();
+                ctx.roundRect(client.x + 50, client.y - 20, 60, 20, 5);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Help!', client.x + 80, client.y - 8);
+            }
+        });
+
+        // Draw ground
+        ctx.fillStyle = '#27ae60';
+        ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
+    }
+
+    function update() {
+        if (!gameState.gameRunning) return;
+
+        // Update clients
+        gameState.clients.forEach(client => {
+            client.update();
+
+            // Check if client reached the center without help
+            if (client.x > canvas.width - 200 && !client.helped && client.stressMeter > 80) {
+                gameState.lives--;
+                client.helped = true; // Prevent multiple life losses
+                showFeedback("Cliënt bereikte het centrum te gestrest! -1 leven", false);
+                damageBarricade();
+
+                if (gameState.lives <= 0) {
+                    endGame();
+                }
+            }
+        });
+
+        // Clean up old clients
+        gameState.clients = gameState.clients.filter(client =>
+            client.x < canvas.width + 100 && (client.helped || client.x < canvas.width - 150)
+        );
+
+        updateUI();
+    }
+
+    function updateUI() {
+        scoreEl.textContent = gameState.score;
+        livesEl.textContent = gameState.lives;
+        levelEl.textContent = gameState.level;
+        barricadeStrengthEl.textContent = `${Math.round(gameState.barricadeStrength)}%`;
+    }
+
+    function gameLoop() {
+        if (!gameState.gameRunning) return;
+
+        update();
+        draw();
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    function restartGame() {
+        gameState = {
+            score: 0,
+            lives: 3,
+            level: 1,
+            gameRunning: false,
+            currentQuestion: 0,
+            barricadeStrength: 100,
+            clientsHelped: 0,
+            clients: [],
+            barricadeBlocks: [],
+            answering: false
+        };
+
+        gameOverEl.style.display = 'none';
+        clientInfoEl.style.display = 'none';
+        answersContainerEl.style.display = 'none';
+        feedbackEl.classList.remove('show');
+
+        initGame();
+    }
+
+    // Add roundRect method for older browsers
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+            this.beginPath();
+            this.moveTo(x + radius, y);
+            this.lineTo(x + width - radius, y);
+            this.quadraticCurveTo(x + width, y, x + width, y + radius);
+            this.lineTo(x + width, y + height - radius);
+            this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            this.lineTo(x + radius, y + height);
+            this.quadraticCurveTo(x, y + height, x, y + height - radius);
+            this.lineTo(x, y + radius);
+            this.quadraticCurveTo(x, y, x + radius, y);
+            this.closePath();
+        };
+    }
+
+    // Make functions globally available
+    window.restartGame = restartGame;
+    window.goBackToExams = goBackToExams;
+
+    // Start loading data when page loads
+    window.addEventListener('load', () => {
+        loadGameData();
+    });
+</script>
+</body>
+</html>

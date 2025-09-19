@@ -58,6 +58,9 @@ function createExamCard(examen) {
     // Maak quiz URL met parameters
     const quizUrl = `../quiz/quiz.html?examenId=${examen.id}&examenNaam=${encodeURIComponent(examen.name)}`;
 
+    // Maak game URL met parameters
+    const gameUrl = `../game/game.html?examenId=${examen.id}&examenNaam=${encodeURIComponent(examen.name)}`;
+
     card.innerHTML = `
         <div class="exam-header">
             <h3 class="exam-title">${examen.name}</h3>
@@ -70,6 +73,7 @@ function createExamCard(examen) {
             </div>
             <div class="exam-actions">
                 <a href="${quizUrl}" class="quiz-button">Start Quiz</a>
+                <a href="${gameUrl}" class="game-button">🎮 Speel Game</a>
                 <button class="view-questions-button" data-examen-id="${examen.id}">Bekijk Vragen</button>
             </div>
         </div>
@@ -87,7 +91,8 @@ function createExamCard(examen) {
     card.addEventListener('click', (e) => {
         // Voorkom dat klik op buttons ook de card trigger
         if (e.target.classList.contains('view-questions-button') ||
-            e.target.classList.contains('quiz-button')) {
+            e.target.classList.contains('quiz-button') ||
+            e.target.classList.contains('game-button')) {
             return;
         }
 
@@ -116,12 +121,18 @@ async function loadExam(examen) {
         // Maak quiz URL met parameters
         const quizUrl = `../quiz/quiz.html?examenId=${examen.id}&examenNaam=${encodeURIComponent(examen.name)}`;
 
-        // Toon terugknop en quiz knop
+        // Maak game URL met parameters
+        const gameUrl = `../game/game.html?examenId=${examen.id}&examenNaam=${encodeURIComponent(examen.name)}`;
+
+        // Toon terugknop, quiz knop en game knop
         const vragenContainer = document.getElementById('vragen-container');
         vragenContainer.innerHTML = `
             <div class="exam-header-section">
                 <button class="back-button" onclick="showExams()">← Terug naar examens</button>
-                <a href="${quizUrl}" class="quiz-button-large">🎯 Start Quiz: ${examen.name}</a>
+                <div class="action-buttons">
+                    <a href="${quizUrl}" class="quiz-button-large">🎯 Start Quiz: ${examen.name}</a>
+                    <a href="${gameUrl}" class="game-button-large">🎮 Speel Game: ${examen.name}</a>
+                </div>
             </div>
             <div class="exam-info-section">
                 <h2>${examen.name}</h2>

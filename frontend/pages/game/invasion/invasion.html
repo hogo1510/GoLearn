@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>De Invloed-Invasie</title>
+    <link rel="stylesheet" href="invasionStyle.css">
+
+</head>
+<body>
+<h1>💥 De Invloed-Invasie 🚀</h1>
+
+<div class="game-container">
+    <div class="game-ui">
+        <div class="ui-element">
+            <h3>Score</h3>
+            <span id="score">0</span>
+        </div>
+        <div class="ui-element">
+            <h3>Levens</h3>
+            <span id="lives">3</span>
+        </div>
+        <div class="ui-element">
+            <h3>Level</h3>
+            <span id="level">1</span>
+        </div>
+        <div class="ui-element">
+            <h3>Stad Status</h3>
+            <span id="cityHealth">100%</span>
+        </div>
+        <div class="ui-element">
+            <h3>Raketten</h3>
+            <span id="missiles">10</span>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="900" height="500"></canvas>
+</div>
+
+<div class="question-panel" id="questionPanel">
+    <div class="timer-bar">
+        <div class="timer-fill" id="timerFill"></div>
+    </div>
+
+    <div id="threatInfo" class="threat-info">
+        <h4>Bedreiging: <span id="threatName">Unknown</span></h4>
+        <p id="threatDescription">Een negatieve invloed nadert de stad!</p>
+    </div>
+
+    <h3>🎯 Interceptie Vraag</h3>
+    <div id="question">Welk antwoord zal deze bedreiging neutraliseren?</div>
+
+    <div class="answers-container" id="answersContainer">
+        <!-- Answer buttons will be dynamically created here -->
+    </div>
+</div>
+
+<div class="feedback" id="feedback"></div>
+
+<div class="game-over" id="gameOver">
+    <div class="game-over-content">
+        <h2>Missie Voltooid!</h2>
+        <p>EindScore: <span id="finalScore">0</span></p>
+        <p>Bedreigingen Geneutraliseerd: <span id="threatsDestroyed">0</span></p>
+        <p>Stad Gezondheid: <span id="finalCityHealth">0</span>%</p>
+        <button class="btn restart-btn" onclick="restartGame()">Nieuwe Missie</button>
+        <button class="btn" onclick="goBackToExams()">Terug naar Basis</button>
+    </div>
+</div>
+
+<div class="loading" id="loading">
+    <h2>Defensie Systeem Opstarten...</h2>
+    <p>Bedreigingen worden geïdentificeerd...</p>
+</div>
+
+<div class="crosshair" id="crosshair"></div>
+
+<script src="invasionApp.js"></script>
+</body>
+</html>
